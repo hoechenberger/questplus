@@ -165,7 +165,7 @@ class QuestPlus:
 
 def stimulate_responses(*,
                         func: str = 'weibull',
-                        stimuli: Dict[Iterable],
+                        stimuli: Dict,
                         params: Dict[str, float],
                         response_domain: Sequence = ('Correct', 'Incorrect'),
                         stim_scale: str = 'log10'):
