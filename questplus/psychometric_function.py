@@ -3,12 +3,13 @@ import numpy as np
 import scipy.stats
 
 
-def weibull_log10(*,
+def weibull(*,
                   intensity: Union[float, Iterable[float]],
                   threshold: Union[float, Iterable[float]],
                   slope: Union[float, Iterable[float]] = 3.5,
                   lower_asymptote: Union[float, Iterable[float]] = 0.01,
-                  lapse_rate: Union[float, Iterable[float]] = 0.01) -> np.ndarray:
+                  lapse_rate: Union[float, Iterable[float]] = 0.01,
+            scale: str =  'log10') -> np.ndarray:
     intensity = np.array(intensity, dtype='float64')
     threshold = np.array(threshold, dtype='float64')
     slope = np.array(slope, dtype='float64')
@@ -28,7 +29,8 @@ def weibull_log10(*,
     assert np.atleast_1d(gamma.squeeze()).shape == np.atleast_1d(lower_asymptote).shape
     assert np.atleast_1d(delta.squeeze()).shape == np.atleast_1d(lapse_rate).shape
 
-    p = 1 - delta - (1 - gamma - delta) * np.exp(-10 ** (beta * (x - t)))
+    s =  1 if scale == 'log10' else 20
+    p = 1 - delta - (1 - gamma - delta) * np.exp(-10 ** (beta * (x - t) / s))
     return p
 
 
