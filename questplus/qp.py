@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, Sequence, Optional
+from typing import Dict, Iterable, Optional
 from questplus import psychometric_function
 
 import xarray as xr
@@ -161,22 +161,3 @@ class QuestPlus:
             responses: Iterable[str]):
         for stimulus, response in zip(stimuli, responses):
             self.update(stimulus=stimulus, response=response)
-
-
-def stimulate_responses(*,
-                        func: str = 'weibull',
-                        stimuli: Dict,
-                        params: Dict[str, float],
-                        response_domain: Sequence = ('Correct', 'Incorrect'),
-                        stim_scale: str = 'log10'):
-    if func == 'weibull':
-        f = psychometric_function.weibull
-        prop_resp_corr = f(intensity=stimuli['intensity'],
-                           **params, scale=stim_scale)
-
-        responses = []
-        for p in prop_resp_corr:
-            response = np.random.choice(response_domain, p=[p, 1-p])
-            responses.append(response)
-    else:
-        raise ValueError('Invalid function specified.')
