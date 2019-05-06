@@ -1,20 +1,24 @@
-import psychometric_function
+from typing import Dict, Iterable, Sequence, Optional
+from questplus import psychometric_function
 
 import xarray as xr
 import numpy as np
-import warnings
 from copy import deepcopy
 
 
 class QuestPlus:
     def __init__(self, *,
-                 stim_domain, param_domain, resp_domain,
-                 prior=None,
-                 func='weibull_log10'):
+                 stim_domain: dict,
+                 param_domain: Dict[str, float],
+                 resp_domain: Iterable,
+                 prior: Optional[Dict[str, float]] = None,
+                 func: str = 'weibull',
+                 stim_scale: str = 'log10'):
         self.func = func
-        self.stim_domain = stim_domain
-        self.param_domain = param_domain
-        self.resp_domain = np.asarray(resp_domain)
+        self.stim_scale = stim_scale
+        self.stim_domain = self._ensure_ndarray(stim_domain)
+        self.param_domain = self._ensure_ndarray(param_domain)
+        self.resp_domain = np.array(resp_domain)
 
         self.prior = self.gen_prior(prior=prior)
         self.posterior = deepcopy(self.prior)
@@ -23,54 +27,46 @@ class QuestPlus:
         self.stim_history = {p: [] for p in self.stim_domain.keys()}
         self.entropy = np.nan
 
-    @staticmethod
-    def gen_prior(*, prior):
+    def _ensure_ndarray(self, x: dict) -> dict:
+        x = deepcopy(x)
+        for k, v in x.items():
+            x[k] = np.atleast_1d(v)
+
+        return x
+
+    def gen_prior(self, *,
+                  prior: dict) -> xr.DataArray:
         prior_orig = deepcopy(prior)
-        # Normalize prior.
-        # prior = deepcopy(prior)
-        # for k, v in prior.items():
-        #     prior[k] = np.asarray(v)
-        #     if not np.isclose(prior[k].sum(), 1):
-        #         msg = f'Prior {k} was not normalized. Normalizing now...'
-        #         warnings.warn(msg)
-        #         prior[k] /= prior[k].sum()
-        #
-        # prior = (xr.DataArray(prior['threshold'], dims=('threshold',)) *
-        #           xr.DataArray(prior['slope'], dims=('slope',)) *
-        #           xr.DataArray(prior['lower_asymptote'], dims=('lower_asymptote',)) *
-        #           xr.DataArray(prior['lapse_rate'], dims=('lapse_rate',)))
 
-        prior_2 = (xr.DataArray(prior_orig['threshold'], dims=('threshold',)) *
-                   xr.DataArray(prior_orig['slope'], dims=('slope',)) *
-                   xr.DataArray(prior_orig['lower_asymptote'], dims=('lower_asymptote',)) *
-                   xr.DataArray(prior_orig['lapse_rate'], dims=('lapse_rate',)))
+        if prior_orig is None:
+            prior = np.ones([len(x) for x in self.param_domain.values()])
+        else:
+            prior_grid = np.meshgrid(*list(prior_orig.values()),
+                                     sparse=True, indexing='ij')
+            prior = np.prod(prior_grid)
 
-        prior_2 /= prior_2.sum()
-        return prior_2
+        # Normalize.
+        prior /= prior.sum()
 
-        # assert prior == prior_2
-        # t, s, f, l = np.meshgrid(prior['threshold'], prior['slope'],
-        #                          prior['lower_asymptote'], prior['lapse_rate'],
-        #                          indexing='ij',
-        #                          sparse=True)
-        # prior_grid = dict(threshold=t, slope=s, lower_asymptote=f, lapse_rate=l)
-        # return prior_grid
-        # return prior
+        dims = *self.param_domain.keys(),
+        coords = dict(**self.param_domain)
+        prior_ = xr.DataArray(data=prior,
+                              dims=dims,
+                              coords=coords)
 
-    def _gen_likelihoods(self):
-        if self.func == 'weibull_log10':
-            f = psychometric_function.weibull_log10
+        return prior_
+
+    def _gen_likelihoods(self) -> xr.DataArray:
+        if self.func == 'weibull':
+            f = psychometric_function.weibull
             pf_resp_corr = f(intensity=self.stim_domain['intensity'],
-                             **self.param_domain)
+                             **self.param_domain,  scale=self.stim_scale)
             pf_resp_incorr = 1 - pf_resp_corr
 
-            likelihoods = np.empty((len(self.resp_domain),
-                                    len(self.stim_domain['intensity']),
-                                    len(self.param_domain['threshold']),
-                                    len(self.param_domain['slope']),
-                                    len(self.param_domain['lower_asymptote']),
-                                    len(self.param_domain['lapse_rate'])))
-
+            likelihood_dim = (len(self.resp_domain),
+                              len(self.stim_domain['intensity']),
+                              *[len(x) for x in self.param_domain.values()])
+            likelihoods = np.empty(likelihood_dim)
             likelihoods[0, :] = pf_resp_corr
             likelihoods[1, :] = pf_resp_incorr
 
@@ -80,16 +76,18 @@ class QuestPlus:
             coords = dict(response=self.resp_domain,
                           **self.stim_domain,
                           **self.param_domain)
-
-            pf_values = xr.DataArray(data=likelihoods, dims=dims,
-                                     coords=coords)
         else:
             raise ValueError('Unknown psychometric function name specified.')
+
+        pf_values = xr.DataArray(data=likelihoods,
+                                 dims=dims,
+                                 coords=coords)
 
         return pf_values
 
     def update(self, *,
-               stimulus, response):
+               stimulus: dict,
+               response: str):
         likelihood = (self.likelihoods
                       .sel(**stimulus, response=response))
 
@@ -102,8 +100,8 @@ class QuestPlus:
         self.resp_history.append(response)
 
     def next_stim(self, *,
-                  method='min_entropy',
-                  sample_size=None):
+                  method: str = 'min_entropy',
+                  sample_size: Optional[int] = None) -> float:
         new_posterior = self.posterior * self.likelihoods
 
         # https://github.com/petejonze/QuestPlus/blob/master/QuestPlus.m,
@@ -138,7 +136,8 @@ class QuestPlus:
 
         return stim
 
-    def get_param_estimates(self, *, method='mean'):
+    def get_param_estimates(self, *,
+                            method: str = 'mean') -> Dict[str, float]:
         param_estimates = dict()
         for param_name in self.param_domain.keys():
             params = list(self.param_domain.keys())
@@ -156,3 +155,28 @@ class QuestPlus:
                 raise ValueError('Unknown method parameter.')
 
         return param_estimates
+
+    def fit(self, *,
+            stimuli: Iterable[dict],
+            responses: Iterable[str]):
+        for stimulus, response in zip(stimuli, responses):
+            self.update(stimulus=stimulus, response=response)
+
+
+def stimulate_responses(*,
+                        func: str = 'weibull',
+                        stimuli: Dict[Iterable],
+                        params: Dict[str, float],
+                        response_domain: Sequence = ('Correct', 'Incorrect'),
+                        stim_scale: str = 'log10'):
+    if func == 'weibull':
+        f = psychometric_function.weibull
+        prop_resp_corr = f(intensity=stimuli['intensity'],
+                           **params, scale=stim_scale)
+
+        responses = []
+        for p in prop_resp_corr:
+            response = np.random.choice(response_domain, p=[p, 1-p])
+            responses.append(response)
+    else:
+        raise ValueError('Invalid function specified.')
