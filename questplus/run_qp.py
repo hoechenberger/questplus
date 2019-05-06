@@ -1,10 +1,8 @@
 import numpy as np
 import scipy.stats
-from qp import QuestPlus
-from psychometric_function import weibull_log10
-import copy
+from questplus.qp import QuestPlus
+from questplus.psychometric_function import weibull
 import matplotlib.pyplot as plt
-from statsmodels.distributions.empirical_distribution import ECDF
 
 
 def plot(q):
@@ -29,16 +27,18 @@ def plot(q):
     param_estimates_mean = q.get_param_estimates(method='mean')
     param_estimates_mode = q.get_param_estimates(method='mode')
 
-    y_mean = weibull_log10(intensity=intensities, threshold=param_estimates_mean['threshold'],
-                           # x=np.linspace(stim_domain[0], stim_domain[-1], 500), t=param_estimates_mean['threshold'],
-                           slope=param_estimates_mean['slope'],
-                           lower_asymptote=param_estimates_mean['lower_asymptote'],
-                           lapse_rate=param_estimates_mean['lapse_rate'])[:, 0, 0, 0]
+    y_mean = weibull(intensity=intensities, threshold=param_estimates_mean['threshold'],
+                     # x=np.linspace(stim_domain[0], stim_domain[-1], 500), t=param_estimates_mean['threshold'],
+                     slope=param_estimates_mean['slope'],
+                     lower_asymptote=param_estimates_mean['lower_asymptote'],
+                     lapse_rate=param_estimates_mean['lapse_rate'],
+                     scale='log10')[:, 0, 0, 0]
 
-    y_mode = weibull_log10(intensity=intensities, threshold=param_estimates_mode['threshold'],
-                           slope=param_estimates_mode['slope'],
-                           lower_asymptote=param_estimates_mode['lower_asymptote'],
-                           lapse_rate=param_estimates_mode['lapse_rate'])[:, 0, 0, 0]
+    y_mode = weibull(intensity=intensities, threshold=param_estimates_mode['threshold'],
+                     slope=param_estimates_mode['slope'],
+                     lower_asymptote=param_estimates_mode['lower_asymptote'],
+                     lapse_rate=param_estimates_mode['lapse_rate'],
+                     scale='log10')[:, 0, 0, 0]
 
     ax[1, 1].plot(intensities, y_mean, 'o-', lw=2, label='mean')
     # ax[1, 1].plot(stim_domain, y_mode, 'o-', lw=2, label='mode')
@@ -126,8 +126,9 @@ prior = dict(threshold=np.ones(len(param['threshold'])),
              lapse_rate=np.ones(len(param['lapse_rate'])))
 
 stim_domain = dict(intensity=intensities)
-q = QuestPlus(stim_domain=stim_domain, func='weibull_log10',
-              param_domain=param, prior=prior,
+q = QuestPlus(stim_domain=stim_domain, func='weibull',
+              stim_scale='log10',
+              param_domain=param, prior=None,
               resp_domain=response_outcomes)
 
 with np.printoptions(precision=3, suppress=True):
@@ -204,11 +205,12 @@ print(scipy.stats.norm.ppf(1-param_estimates_mean['lapse_rate']) -
 #%% d-prime
 param_estimates_mean = q.get_param_estimates(method='mean')
 x = np.linspace(intensities[0], intensities[-1], 10000)
-y_mean = weibull_log10(intensity=x,
-                       threshold=param_estimates_mean['threshold'],
-                       slope=param_estimates_mean['slope'],
-                       lower_asymptote=param_estimates_mean['lower_asymptote'],
-                       lapse_rate=param_estimates_mean['lapse_rate'])[:, 0, 0, 0]
+y_mean = weibull(intensity=x,
+                 threshold=param_estimates_mean['threshold'],
+                 slope=param_estimates_mean['slope'],
+                 lower_asymptote=param_estimates_mean['lower_asymptote'],
+                 lapse_rate=param_estimates_mean['lapse_rate'],
+                 scale='log10')[:, 0, 0, 0]
 
 dp = scipy.stats.norm.ppf(y_mean) - scipy.stats.norm.ppf(param_estimates_mean['lower_asymptote'])
 dp_minus_1 = np.abs(dp-1)
