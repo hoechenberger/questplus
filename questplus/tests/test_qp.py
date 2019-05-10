@@ -29,17 +29,18 @@ def test_threshold():
     stim_domain = dict(intensity=contrasts)
     param_domain = dict(threshold=threshold, slope=slope,
                         lower_asymptote=guess, lapse_rate=lapse)
-    resp_domain = ['Correct', 'Incorrect']
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
     f = 'weibull'
     scale = 'dB'
 
     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
-                  resp_domain=resp_domain, func=f, stim_scale=scale)
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
     for expected_contrast, response in zip(expected_contrasts, responses):
-        next_contrast = q.next_stim(method='min_entropy')
+        next_contrast = q.next_stim(stim_selection='min_entropy')
         assert next_contrast == expected_contrast
-        q.update(stimulus=dict(intensity=next_contrast), response=response)
+        q.update(stimulus=dict(intensity=next_contrast),
+                 outcome=dict(response=response))
 
     assert np.allclose(q.get_param_estimates(method='mode')['threshold'],
                        expected_mode_threshold)
@@ -85,17 +86,18 @@ def test_threshold_slope():
     stim_domain = dict(intensity=contrasts)
     param_domain = dict(threshold=threshold, slope=slope,
                         lower_asymptote=guess, lapse_rate=lapse)
-    resp_domain = ['Correct', 'Incorrect']
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
     f = 'weibull'
     scale = 'dB'
 
     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
-                  resp_domain=resp_domain, func=f, stim_scale=scale)
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
     for expected_contrast, response in zip(expected_contrasts, responses):
-        next_contrast = q.next_stim(method='min_entropy')
+        next_contrast = q.next_stim(stim_selection='min_entropy')
         assert next_contrast == expected_contrast
-        q.update(stimulus=dict(intensity=next_contrast), response=response)
+        q.update(stimulus=dict(intensity=next_contrast),
+                 outcome=dict(response=response))
         # print(q.get_param_estimates(method='mode')['threshold'])
 
     fitted_mode_params = q.get_param_estimates(method='mode')
@@ -132,20 +134,21 @@ def test_threshold_slope_lapse():
     stim_domain = dict(intensity=contrasts)
     param_domain = dict(threshold=contrasts, slope=slope,
                         lower_asymptote=lower_asymptote, lapse_rate=lapse_rate)
-    resp_domain = ['Correct', 'Incorrect']
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
     f = 'weibull'
     scale = 'dB'
 
     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
-                  resp_domain=resp_domain, func=f, stim_scale=scale)
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
     for _ in range(64):
-        next_contrast = q.next_stim(method='min_entropy')
+        next_contrast = q.next_stim(stim_selection='min_entropy')
         response = simulate_response(func=f,
                                      stimulus=dict(intensity=next_contrast),
                                      params=true_params,
                                      stim_scale=scale)
-        q.update(stimulus=dict(intensity=next_contrast), response=response)
+        q.update(stimulus=dict(intensity=next_contrast),
+                 outcome=dict(response=response))
 
     estimated_params = q.get_param_estimates(method='mean')
 
@@ -169,12 +172,12 @@ def test_threshold_slope_lapse():
 #     lapse_rate = np.arange(0, 0.04 + 0.01, 0.01)
 #     param_domain = dict(mean=orientation, sd=sd, lapse_rate=lapse_rate)
 #
-#     resp_domain = ['Correct', 'Incorrect']
+#     outcome_domain = ['Correct', 'Incorrect']
 #     f = 'norm_cdf'
 #     scale = 'dB'
 #
 #     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
-#                   resp_domain=resp_domain, func=f, stim_scale=scale)
+#                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
 
 if __name__ == '__main__':

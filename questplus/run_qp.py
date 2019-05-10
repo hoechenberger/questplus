@@ -13,39 +13,56 @@ def plot(q):
                   'o-')
     # plt.semilogx()
     ax[0, 0].set_title('Threshold')
+    ax[0, 0].set_xlabel('Threshold concentratoion [log mol/L]')
+    ax[0, 0].set_ylabel('Probability')
 
     ax[0, 1].plot(q.param_domain['slope'],
                   q.posterior.sum(dim=['lower_asymptote', 'threshold', 'lapse_rate']),
                   'o-')
     ax[0, 1].set_title('Slope')
+    ax[0, 1].set_xlabel('Slope')
+    ax[0, 1].set_ylabel('Probability')
 
     ax[1, 0].plot(q.param_domain['lower_asymptote'],
                   q.posterior.sum(dim=['slope', 'threshold', 'lapse_rate']),
                   'o-')
-    ax[1, 0].set_title('fa_rate')
+    ax[1, 0].set_title('False-Alarm Rate')
+    ax[1, 0].set_ylabel('Probability')
+    ax[1, 0].set_xlabel('False-Alarm Rate')
+
 
     param_estimates_mean = q.get_param_estimates(method='mean')
     param_estimates_mode = q.get_param_estimates(method='mode')
 
-    y_mean = weibull(intensity=intensities, threshold=param_estimates_mean['threshold'],
-                     # x=np.linspace(stim_domain[0], stim_domain[-1], 500), t=param_estimates_mean['threshold'],
+    intensity_ = np.linspace(-3.2, -2.5, 500)
+    y_mean = weibull(#intensity=intensities, threshold=param_estimates_mean['threshold'],
+                     # intensity=np.linspace(stim_domain['intensity'][0], stim_domain['intensity'][-1], 500),
+                     intensity=intensity_,
+                     threshold=param_estimates_mean['threshold'],
                      slope=param_estimates_mean['slope'],
                      lower_asymptote=param_estimates_mean['lower_asymptote'],
                      lapse_rate=param_estimates_mean['lapse_rate'],
                      scale='log10')[:, 0, 0, 0]
 
-    y_mode = weibull(intensity=intensities, threshold=param_estimates_mode['threshold'],
-                     slope=param_estimates_mode['slope'],
-                     lower_asymptote=param_estimates_mode['lower_asymptote'],
-                     lapse_rate=param_estimates_mode['lapse_rate'],
-                     scale='log10')[:, 0, 0, 0]
+    # y_mode = weibull(intensity=intensities, threshold=param_estimates_mode['threshold'],
+    #                  slope=param_estimates_mode['slope'],
+    #                  lower_asymptote=param_estimates_mode['lower_asymptote'],
+    #                  lapse_rate=param_estimates_mode['lapse_rate'],
+    #                  scale='log10')[:, 0, 0, 0]
 
-    ax[1, 1].plot(intensities, y_mean, 'o-', lw=2, label='mean')
+    # ax[1, 1].plot(intensities, y_mean, 'o-', lw=2)
+    ax[1, 1].plot(intensity_,  y_mean, '-', lw=2)
+
+
     # ax[1, 1].plot(stim_domain, y_mode, 'o-', lw=2, label='mode')
     # ax[1, 1].plot(np.linspace(stim_domain[0], stim_domain[-1], 500), y_mean, '-', lw=2, label='mean')
 
+    ax[1, 1].set_title('Estimated Psychometric function')
+    ax[1, 1].set_xlabel('Concentratoion [log mol/L]')
+    ax[1, 1].set_ylabel('Probability')
 
-    ax[1, 1].legend(loc='best')
+
+    # ax[1, 1].legend(loc='best')
     # plt.semilogx()
     ax[1, 1].set_ylim((-0.05, 1.05))
     plt.show()
@@ -92,7 +109,7 @@ param = dict(#threshold=np.array([0, 1, 2], dtype='float64'),
 # stim_domain = np.linspace(start=-2, stop=4, num=30, dtype='float64')
 
 # Response outcomes.
-response_outcomes = np.array(['Yes', 'No'])
+outcome_domain = dict(response=np.array(['Yes', 'No']))
 
 
 # def gen_prior():
@@ -129,18 +146,18 @@ stim_domain = dict(intensity=intensities)
 q = QuestPlus(stim_domain=stim_domain, func='weibull',
               stim_scale='log10',
               param_domain=param, prior=None,
-              resp_domain=response_outcomes)
+              outcome_domain=outcome_domain)
 
 with np.printoptions(precision=3, suppress=True):
     print(q.stim_domain)
 
 plot(q)
-print(q.next_stim(method='min_entropy'))
+print(q.next_stim(stim_selection='min_entropy'))
 for trial_no in range(1, 20+1):
     if trial_no == 1:
         intensity = intensities[3]  # start with a relatively high concentration
     else:
-        intensity = q.next_stim(method='min_n_entropy')
+        intensity = q.next_stim(stim_selection='min_n_entropy')
     # intensity = np.random.choice(stim_domain, 1)
 
     print(f'\n ==> Trial {trial_no}, intensity: {intensity}')
@@ -163,7 +180,8 @@ for trial_no in range(1, 20+1):
         if response_ == 'Yes':
             print('   --> Inserting FALSE-ALARM...')
     # response_ = 'No'
-    q.update(stimulus=dict(intensity=intensity), response=response_)
+    q.update(stimulus=dict(intensity=intensity),
+             outcome=dict(response=response_))
     print(f'   Response: {response_}, entropy: {q.entropy}')
 
     # p_thresh_cdf = q.posterior.sum(['slope', 'lower_asymptote', 'lapse_rate']).cumsum()

@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Union
 from questplus import psychometric_function
 
 import xarray as xr
@@ -9,20 +9,29 @@ from copy import deepcopy
 class QuestPlus:
     def __init__(self, *,
                  stim_domain: dict,
-                 param_domain: Dict[str, float],
-                 resp_domain: Iterable,
+                 param_domain: Dict[str,
+                                    Union[float, Iterable[float]]],
+                 outcome_domain: Dict[str,
+                                      Union[str, float,
+                                         Iterable[Union[str, float]]]],
                  prior: Optional[Dict[str, float]] = None,
                  func: str = 'weibull',
-                 stim_scale: str = 'log10'):
+                 stim_scale: str = 'log10',
+                 stim_selection: str = 'min_entropy',
+                 stim_selection_options: Optional = None):
         self.func = func
         self.stim_scale = stim_scale
         self.stim_domain = self._ensure_ndarray(stim_domain)
         self.param_domain = self._ensure_ndarray(param_domain)
-        self.resp_domain = np.array(resp_domain)
+        self.outcome_domain = self._ensure_ndarray(outcome_domain)
 
         self.prior = self.gen_prior(prior=prior)
         self.posterior = deepcopy(self.prior)
         self.likelihoods = self._gen_likelihoods()
+
+        self.stim_selection = stim_selection
+        self.stim_selection_options = stim_selection_options
+
         self.resp_history = list()
         self.stim_history = {p: [] for p in self.stim_domain.keys()}
         self.entropy = np.nan
@@ -63,7 +72,7 @@ class QuestPlus:
                              **self.param_domain,  scale=self.stim_scale)
             pf_resp_incorr = 1 - pf_resp_corr
 
-            likelihood_dim = (len(self.resp_domain),
+            likelihood_dim = (len(self.outcome_domain['response']),
                               len(self.stim_domain['intensity']),
                               *[len(x) for x in self.param_domain.values()])
             likelihoods = np.empty(likelihood_dim)
@@ -73,7 +82,7 @@ class QuestPlus:
             dims = ('response',
                     *self.stim_domain.keys(),
                     *self.param_domain.keys())
-            coords = dict(response=self.resp_domain,
+            coords = dict(response=self.outcome_domain['response'],
                           **self.stim_domain,
                           **self.param_domain)
         else:
@@ -87,9 +96,9 @@ class QuestPlus:
 
     def update(self, *,
                stimulus: dict,
-               response: str):
+               outcome: dict):
         likelihood = (self.likelihoods
-                      .sel(**stimulus, response=response))
+                      .sel(**stimulus, **outcome))
 
         self.posterior = self.posterior * likelihood
         self.posterior /= self.posterior.sum()
@@ -97,11 +106,10 @@ class QuestPlus:
         # Log the results, too.
         for stim_property, stim_val in stimulus.items():
             self.stim_history[stim_property].append(stim_val)
-        self.resp_history.append(response)
+        self.resp_history.append(outcome)
 
     def next_stim(self, *,
-                  method: str = 'min_entropy',
-                  sample_size: Optional[int] = None) -> float:
+                  stim_selection: Union[str] = None) -> float:
         new_posterior = self.posterior * self.likelihoods
 
         # https://github.com/petejonze/QuestPlus/blob/master/QuestPlus.m,
@@ -110,13 +118,13 @@ class QuestPlus:
         new_posterior /= pk
 
         H = -(new_posterior * np.log(new_posterior)).sum(dim=self.param_domain.keys())
-        EH = (pk * H).sum(dim=['response'])
+        EH = (pk * H).sum(dim=list(self.outcome_domain.keys()))
 
-        if method == 'min_entropy':
+        if stim_selection == 'min_entropy':
             # stim = EH.isel(intensity=EH.argmin()).coords['intensity'].values
             stim = self.stim_domain['intensity'][EH.argmin()]
             self.entropy = EH.min().item()
-        elif method == 'min_n_entropy':
+        elif stim_selection == 'min_n_entropy':
             index = np.argsort(EH)[:4]
             while True:
                 stim_candidates = self.stim_domain['intensity'][index.values]
@@ -133,7 +141,7 @@ class QuestPlus:
 
             print(f'options: {self.stim_domain["intensity"][index.values]} -> {stim}')
         else:
-            raise ValueError('Unknown method supplied.')
+            raise ValueError('Unknown stim_selection supplied.')
 
         return stim
 
@@ -163,4 +171,4 @@ class QuestPlus:
             stimuli: Iterable[dict],
             responses: Iterable[str]):
         for stimulus, response in zip(stimuli, responses):
-            self.update(stimulus=stimulus, response=response)
+            self.update(stimulus=stimulus, outcome=response)
