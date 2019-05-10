@@ -135,6 +135,7 @@ with np.printoptions(precision=3, suppress=True):
     print(q.stim_domain)
 
 plot(q)
+print(q.next_stim(method='min_entropy'))
 for trial_no in range(1, 20+1):
     if trial_no == 1:
         intensity = intensities[3]  # start with a relatively high concentration
@@ -182,8 +183,8 @@ plot(q)
 print('\nParameter estimates:')
 param_estimates_mean = q.get_param_estimates(method='mean')
 print(param_estimates_mean)
-# param_estimates_mode = q.get_param_estimates(method='mode')
-# print(param_estimates_mode)
+param_estimates_mode = q.get_param_estimates(method='mode')
+print(param_estimates_mode)
 
 with np.printoptions(precision=3, suppress=True):
     print(q.stim_domain)

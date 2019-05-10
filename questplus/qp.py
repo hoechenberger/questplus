@@ -117,10 +117,11 @@ class QuestPlus:
             stim = self.stim_domain['intensity'][EH.argmin()]
             self.entropy = EH.min().item()
         elif method == 'min_n_entropy':
-            index = np.argsort(EH) <= 4
-
+            index = np.argsort(EH)[:4]
             while True:
-                stim = np.random.choice(self.stim_domain['intensity'][index.values])
+                stim_candidates = self.stim_domain['intensity'][index.values]
+                stim = np.random.choice(stim_candidates)
+
                 if len(self.stim_history['intensity']) < 2:
                     break
                 elif (np.isclose(stim, self.stim_history['intensity'][-1]) and
@@ -149,8 +150,10 @@ class QuestPlus:
                                                .sum()
                                                .item())
             elif method == 'mode':
-                index = self.posterior.sum(dim=params).argmax()
-                param_estimates[param_name] = self.param_domain[param_name][index]
+                index = np.unravel_index(self.posterior.argmax(),
+                                         self.posterior.shape)
+                coords = self.posterior[index].coords
+                param_estimates[param_name] = coords[param_name].item()
             else:
                 raise ValueError('Unknown method parameter.')
 
