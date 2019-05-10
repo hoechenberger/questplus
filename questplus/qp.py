@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, Optional, Union
+from typing import Optional, Union
 from questplus import psychometric_function
 
 import xarray as xr
@@ -9,12 +9,9 @@ from copy import deepcopy
 class QuestPlus:
     def __init__(self, *,
                  stim_domain: dict,
-                 param_domain: Dict[str,
-                                    Union[float, Iterable[float]]],
-                 outcome_domain: Dict[str,
-                                      Union[str, float,
-                                         Iterable[Union[str, float]]]],
-                 prior: Optional[Dict[str, float]] = None,
+                 param_domain: dict,
+                 outcome_domain: dict,
+                 prior: Optional[dict] = None,
                  func: str = 'weibull',
                  stim_scale: str = 'log10',
                  stim_selection: str = 'min_entropy',
@@ -66,23 +63,29 @@ class QuestPlus:
         return prior_
 
     def _gen_likelihoods(self) -> xr.DataArray:
-        if self.func == 'weibull':
-            f = psychometric_function.weibull
-            pf_resp_corr = f(intensity=self.stim_domain['intensity'],
-                             **self.param_domain,  scale=self.stim_scale)
+        if self.func in ['weibull', 'csf']:
+            if self.func == 'weibull':
+                f = psychometric_function.weibull
+            else:
+                f = psychometric_function.csf
+
+            pf_resp_corr = f(**self.stim_domain,
+                             **self.param_domain,
+                             scale=self.stim_scale)
+
             pf_resp_incorr = 1 - pf_resp_corr
 
             likelihood_dim = (len(self.outcome_domain['response']),
-                              len(self.stim_domain['intensity']),
+                              *[len(x) for x in self.stim_domain.values()],
                               *[len(x) for x in self.param_domain.values()])
             likelihoods = np.empty(likelihood_dim)
             likelihoods[0, :] = pf_resp_corr
             likelihoods[1, :] = pf_resp_incorr
 
-            dims = ('response',
+            dims = (*self.outcome_domain.keys(),
                     *self.stim_domain.keys(),
                     *self.param_domain.keys())
-            coords = dict(response=self.outcome_domain['response'],
+            coords = dict(**self.outcome_domain,
                           **self.stim_domain,
                           **self.param_domain)
         else:
@@ -146,7 +149,7 @@ class QuestPlus:
         return stim
 
     def get_param_estimates(self, *,
-                            method: str = 'mean') -> Dict[str, float]:
+                            method: str = 'mean') -> dict:
         param_estimates = dict()
         for param_name in self.param_domain.keys():
             params = list(self.param_domain.keys())
@@ -166,9 +169,3 @@ class QuestPlus:
                 raise ValueError('Unknown method parameter.')
 
         return param_estimates
-
-    def fit(self, *,
-            stimuli: Iterable[dict],
-            responses: Iterable[str]):
-        for stimulus, response in zip(stimuli, responses):
-            self.update(stimulus=stimulus, outcome=response)
