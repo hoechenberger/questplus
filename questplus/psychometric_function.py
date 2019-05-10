@@ -1,5 +1,7 @@
 from typing import Union, Iterable
 import numpy as np
+
+
 # import scipy.stats
 
 
@@ -31,6 +33,46 @@ def weibull(*,
 
     s = 1 if scale == 'log10' else 20
     p = 1 - delta - (1 - gamma - delta) * np.exp(-10 ** (beta * (x - t) / s))
+    return p
+
+
+def csf(*,
+        contrast: Union[float, Iterable[float]],
+        spatial_freq: Union[float, Iterable[float]],
+        temporal_freq: Union[float, Iterable[float]] = 0,
+        c0: Union[float, Iterable[float]],
+        cf: Union[float, Iterable[float]],
+        cw: Union[float, Iterable[float]] = 0,
+        min_thresh: Union[float, Iterable[float]],
+        slope: Union[float, Iterable[float]] = 3.5,
+        lower_asymptote: Union[float, Iterable[float]] = 0.01,
+        lapse_rate: Union[float, Iterable[float]] = 0.01,
+        scale: str = 'log10') -> np.ndarray:
+    contrast = np.array(contrast, dtype='float64')
+    spatial_freq = np.array(spatial_freq, dtype='float64')
+    temporal_freq = np.array(temporal_freq, dtype='float64')
+    c0 = np.array(c0, dtype='float64')
+    cf = np.array(cf, dtype='float64')
+    cw = np.array(cw, dtype='float64')
+    min_thresh = np.array(min_thresh, dtype='float64')
+    slope = np.array(slope, dtype='float64')
+    lower_asymptote = np.array(lower_asymptote, dtype='float64')
+    lapse_rate = np.array(lapse_rate, dtype='float64')
+
+    t, c0_, cf_, cw_, f, w = np.meshgrid(min_thresh, c0, cf, cw,
+                                         spatial_freq, temporal_freq)
+    threshold = np.max([t,
+                        c0_ +
+                        cf_ * f +
+                        cw_ * w])
+
+    p = weibull(intensity=contrast,
+                threshold=threshold,
+                slope=slope,
+                lower_asymptote=lower_asymptote,
+                lapse_rate=lapse_rate,
+                scale=scale)
+
     return p
 
 

@@ -58,8 +58,6 @@ def test_threshold_slope():
 
     expected_mode_threshold = -20
     expected_mode_slope = 3
-    expected_mean_threshold = -19.582425723172893
-    expected_mean_slope = 3.3075361994603325
 
     expected_contrasts = [-18, -22, -12, -13, -15, -16, -17, -18, -19, -21,
                           -24, -25, -26, -27, -21, -22, -23, -20, -20, -20,
@@ -101,21 +99,11 @@ def test_threshold_slope():
         # print(q.get_param_estimates(method='mode')['threshold'])
 
     fitted_mode_params = q.get_param_estimates(method='mode')
-    fitted_mean_params = q.get_param_estimates(method='mean')
 
     assert np.allclose(fitted_mode_params['threshold'],
                        expected_mode_threshold)
     assert np.allclose(fitted_mode_params['slope'],
                        expected_mode_slope)
-
-
-
-    # assert np.allclose(fitted_mean_params['threshold'],
-    #                    expected_mean_threshold)
-    # assert np.allclose(fitted_mean_params['slope'],
-    #                    expected_mean_slope)
-
-
 
 
 def test_threshold_slope_lapse():
@@ -180,5 +168,38 @@ def test_threshold_slope_lapse():
 #                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
 
+def test_contrast_sensitivity():
+    # Watson 2017, Example 4:
+    # "Contrast sensitivity function {2, 3, 2}"
+
+    true_params = dict(min_thresh=-35,
+                       c0=-50,
+                       cf=1.2,
+                       slope=3,
+                       lower_asymptote=0.5,
+                       lapse_rate=0.01)
+
+    spatial_freqs = np.arange(0, 40+2, 2)
+    contrasts = np.arange(-50, 0+2, 2)
+
+    stim_domain = dict(contrast=contrasts,
+                       spatial_freq=spatial_freqs)
+
+    min_threshs = np.arange(-50, -30+2, 2)
+    c0s = np.arange(-60, -40+2, 2)
+    cfs = np.arange(0.8, 1.6+0.2, 0.2)
+
+    param_domain = dict(min_thresh=min_threshs,
+                        c0=c0s,
+                        cf=cfs)
+
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+    f = 'csf'
+    scale = 'dB'
+
+    q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale)
+    print('Hello')
+
 if __name__ == '__main__':
-    test_threshold_slope()
+    test_contrast_sensitivity()
