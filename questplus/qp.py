@@ -98,16 +98,16 @@ class QuestPlus:
         return pf_values
 
     def update(self, *,
-               stimulus: dict,
+               stim: dict,
                outcome: dict):
         likelihood = (self.likelihoods
-                      .sel(**stimulus, **outcome))
+                      .sel(**stim, **outcome))
 
         self.posterior = self.posterior * likelihood
         self.posterior /= self.posterior.sum()
 
         # Log the results, too.
-        for stim_property, stim_val in stimulus.items():
+        for stim_property, stim_val in stim.items():
             self.stim_history[stim_property].append(stim_val)
         self.resp_history.append(outcome)
 
@@ -130,24 +130,27 @@ class QuestPlus:
             # Get coordinates of stimulus properties that minimize entropy.
             index = np.unravel_index(EH.argmin(), EH.shape)
             coords = EH[index].coords
-            stim = {k: v.item() for k, v in coords.items()}
+            stim = {stim_property: stim_val.item()
+                    for stim_property, stim_val in coords.items()}
             self.entropy = EH.min().item()
-        elif stim_selection == 'min_n_entropy':
-            index = np.argsort(EH)[:4]
-            while True:
-                stim_candidates = self.stim_domain['intensity'][index.values]
-                stim = np.random.choice(stim_candidates)
-
-                if len(self.stim_history['intensity']) < 2:
-                    break
-                elif (np.isclose(stim, self.stim_history['intensity'][-1]) and
-                      np.isclose(stim, self.stim_history['intensity'][-2])):
-                    print('\n  ==> shuffling again... <==\n')
-                    continue
-                else:
-                    break
-
-            print(f'options: {self.stim_domain["intensity"][index.values]} -> {stim}')
+        # FIXME: currently disabled, need to adopt above method for
+        # finding correct coordinates!
+        # elif stim_selection == 'min_n_entropy':
+        #     index = np.argsort(EH)[:4]
+        #     while True:
+        #         stim_candidates = self.stim_domain['intensity'][index.values]
+        #         stim = np.random.choice(stim_candidates)
+        #
+        #         if len(self.stim_history['intensity']) < 2:
+        #             break
+        #         elif (np.isclose(stim, self.stim_history['intensity'][-1]) and
+        #               np.isclose(stim, self.stim_history['intensity'][-2])):
+        #             print('\n  ==> shuffling again... <==\n')
+        #             continue
+        #         else:
+        #             break
+        #
+        #     print(f'options: {self.stim_domain["intensity"][index.values]} -> {stim}')
         else:
             raise ValueError('Unknown stim_selection supplied.')
 
