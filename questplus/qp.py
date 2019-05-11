@@ -75,9 +75,12 @@ class QuestPlus:
 
             pf_resp_incorr = 1 - pf_resp_corr
 
-            likelihood_dim = (len(self.outcome_domain['response']),
-                              *[len(x) for x in self.stim_domain.values()],
-                              *[len(x) for x in self.param_domain.values()])
+            # likelihood_dim = (len(self.outcome_domain['response']),
+            #                   *[len(x) for x in self.stim_domain.values()],
+            #                   *[len(x) for x in self.param_domain.values()])
+            likelihood_dim = [len(self.outcome_domain['response'])]
+            likelihood_dim.extend(pf_resp_corr.shape)
+
             likelihoods = np.empty(likelihood_dim)
             likelihoods[0, :] = pf_resp_corr
             likelihoods[1, :] = pf_resp_incorr

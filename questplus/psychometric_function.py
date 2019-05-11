@@ -25,7 +25,7 @@ def weibull(*,
                                            lapse_rate,
                                            indexing='ij', sparse=True)
 
-    assert np.atleast_1d(intensity.squeeze()).shape == np.atleast_1d(intensity).shape
+    assert np.atleast_1d(x.squeeze()).shape == np.atleast_1d(intensity).shape
     assert np.atleast_1d(t.squeeze()).shape == np.atleast_1d(threshold).shape
     assert np.atleast_1d(beta.squeeze()).shape == np.atleast_1d(slope).shape
     assert np.atleast_1d(gamma.squeeze()).shape == np.atleast_1d(lower_asymptote).shape
@@ -59,19 +59,32 @@ def csf(*,
     lower_asymptote = np.array(lower_asymptote, dtype='float64')
     lapse_rate = np.array(lapse_rate, dtype='float64')
 
-    t, c0_, cf_, cw_, f, w = np.meshgrid(min_thresh, c0, cf, cw,
-                                         spatial_freq, temporal_freq)
-    threshold = np.max([t,
-                        c0_ +
-                        cf_ * f +
-                        cw_ * w])
+    c, f, w, c0_, cf_, cw_, t, beta, gamma, delta = np.meshgrid(
+        contrast, spatial_freq, temporal_freq, c0, cf, cw, min_thresh,
+        slope, lower_asymptote, lapse_rate,
+        indexing='ij', sparse=True)
 
-    p = weibull(intensity=contrast,
-                threshold=threshold,
-                slope=slope,
-                lower_asymptote=lower_asymptote,
-                lapse_rate=lapse_rate,
-                scale=scale)
+    # t, c0_, cf_, cw_, f, w = np.meshgrid(min_thresh, c0, cf, cw,
+    #                                      spatial_freq, temporal_freq,
+    #                                      indexing='ij', sparse=True)
+    #
+    # threshold = np.maximum(t, c0_ + cf_ * f + cw_ * w)
+    # p = weibull(intensity=contrast,
+    #             threshold=threshold,
+    #             slope=slope,
+    #             lower_asymptote=lower_asymptote,
+    #             lapse_rate=lapse_rate,
+    #             scale=scale)
+
+    threshold = np.maximum(t, c0_ + cf_ * f + cw_ * w)
+
+    s = 1 if scale == 'log10' else 20
+    p = 1 - delta - (1 - gamma - delta) * np.exp(-10 ** (beta * (c - threshold) / s))
+
+    print(c.shape)
+    print(c0_.shape)
+    print(threshold.shape)
+    print(p.shape)
 
     return p
 
