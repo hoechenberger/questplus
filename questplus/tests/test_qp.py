@@ -1,6 +1,5 @@
 import numpy as np
 from questplus.qp import QuestPlus
-from questplus.utils import simulate_response
 
 
 def test_threshold():
@@ -37,9 +36,9 @@ def test_threshold():
                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
     for expected_contrast, response in zip(expected_contrasts, responses):
-        next_contrast = q.next_stim(stim_selection='min_entropy')
-        assert next_contrast == expected_contrast
-        q.update(stimulus=dict(intensity=next_contrast),
+        next_stim = q.next_stim(stim_selection='min_entropy')
+        assert next_stim == dict(intensity=expected_contrast)
+        q.update(stimulus=next_stim,
                  outcome=dict(response=response))
 
     assert np.allclose(q.get_param_estimates(method='mode')['threshold'],
@@ -92,11 +91,10 @@ def test_threshold_slope():
                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
     for expected_contrast, response in zip(expected_contrasts, responses):
-        next_contrast = q.next_stim(stim_selection='min_entropy')
-        assert next_contrast == expected_contrast
-        q.update(stimulus=dict(intensity=next_contrast),
+        next_stim = q.next_stim(stim_selection='min_entropy')
+        assert next_stim == dict(intensity=expected_contrast)
+        q.update(stimulus=next_stim,
                  outcome=dict(response=response))
-        # print(q.get_param_estimates(method='mode')['threshold'])
 
     fitted_mode_params = q.get_param_estimates(method='mode')
 
@@ -109,15 +107,14 @@ def test_threshold_slope():
 def test_threshold_slope_lapse():
     # Watson 2017, Example 2:
     # "Estimation of contrast threshold, slope, and lapse {1, 3, 2}"
-    true_params = dict(threshold=-20,
-                       slope=3,
-                       lower_asymptote=0.5,
-                       lapse_rate=0.02)
+    expected_mode_threshold = -20
+    expected_mode_slope = 5
+    expected_mode_lapse = 0.04
 
     contrasts = np.arange(-40, 0 + 1)
     slope = np.arange(2, 5 + 1)
     lower_asymptote = 0.5
-    lapse_rate = np.arange(0, 0.04 + 0.01, 0.01)
+    lapse_rate = np.arange(0, 0.04+0.01, 0.01)
 
     stim_domain = dict(intensity=contrasts)
     param_domain = dict(threshold=contrasts, slope=slope,
@@ -126,23 +123,68 @@ def test_threshold_slope_lapse():
     f = 'weibull'
     scale = 'dB'
 
+    expected_contrasts = [-18, -22, -25, -28, -30, -21, -12, -14, -15, -16,
+                          -18, -19, -20, -22, -23, -18, -19, -16, -17, -17,
+                          -18, -18, -18, -19, -19, -17, -17, -18, -18, -18,
+                          -18, -19, -19, -20, -18, -18, -18, -18, -18, -19,
+                          -19, -19, -19, -20, -18, -18, -18, -18, -18, -18,
+                          -18, -18, -18, -19, -19, -19, -20, -18, -18, -18,
+                          -18, -19, -19, -19, -18, -18, -18, -18, -19, -19,
+                          -19, -19, -19, -19, -19, -19, -20, -21, -19, -19,
+                          -19, -19, -19, -19, -19, -18, -19, -19, -16, -16,
+                          -16, -16, -16, -16,   0,   0, -19, -19, -19, -19,
+                          -19, -19, -19, -19, -19, -19, -19, -19, -19, -19,
+                          -21, -21, -19, -19, -19, -19, -19, -19, -19, -19,
+                          -19, -19, -19, -19, -19, -19, -19, -19]
+
+    responses = ['Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Incorrect', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Correct', 'Incorrect', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Incorrect', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Incorrect', 'Correct',
+                 'Correct', 'Correct', 'Incorrect', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Incorrect', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Incorrect', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Incorrect', 'Correct', 'Incorrect',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Correct', 'Correct', 'Incorrect', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Incorrect', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Incorrect', 'Correct', 'Correct', 'Correct',
+                 'Incorrect', 'Correct', 'Incorrect', 'Incorrect', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Incorrect', 'Correct',
+                 'Correct', 'Correct', 'Correct']
+
     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
-    for _ in range(64):
-        next_contrast = q.next_stim(stim_selection='min_entropy')
-        response = simulate_response(func=f,
-                                     stimulus=dict(intensity=next_contrast),
-                                     params=true_params,
-                                     stim_scale=scale)
-        q.update(stimulus=dict(intensity=next_contrast),
+    for expected_contrast, response in zip(expected_contrasts, responses):
+        next_stim = q.next_stim(stim_selection='min_entropy')
+        assert next_stim == dict(intensity=expected_contrast)
+        q.update(stimulus=next_stim,
                  outcome=dict(response=response))
 
-    estimated_params = q.get_param_estimates(method='mean')
+    fitted_mode_params = q.get_param_estimates(method='mode')
 
-    assert -22 <= estimated_params['threshold'] <= -18
-    assert 2.5 <= estimated_params['slope'] <= 5
-    assert 0 <= estimated_params['lapse_rate'] <= 0.04
+    assert np.allclose(fitted_mode_params['threshold'],
+                       expected_mode_threshold)
+    assert np.allclose(fitted_mode_params['slope'],
+                       expected_mode_slope)
+    assert np.allclose(fitted_mode_params['lapse_rate'],
+                       expected_mode_lapse)
+
+    print(q.get_param_estimates(method='mean'))
+
+
 
 
 # def test_mean_sd_lapse():
@@ -199,7 +241,7 @@ def test_contrast_sensitivity():
 
     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
-    print('Hello')
+    q.next_stim()
 
 if __name__ == '__main__':
-    test_contrast_sensitivity()
+    test_threshold_slope_lapse()
