@@ -112,7 +112,10 @@ class QuestPlus:
         self.resp_history.append(outcome)
 
     def next_stim(self, *,
-                  stim_selection: Union[str] = None) -> float:
+                  stim_selection: Optional[str] = None) -> dict:
+        if stim_selection is None:
+            stim_selection = self.stim_selection
+
         new_posterior = self.posterior * self.likelihoods
 
         # https://github.com/petejonze/QuestPlus/blob/master/QuestPlus.m,
@@ -124,8 +127,10 @@ class QuestPlus:
         EH = (pk * H).sum(dim=list(self.outcome_domain.keys()))
 
         if stim_selection == 'min_entropy':
-            # stim = EH.isel(intensity=EH.argmin()).coords['intensity'].values
-            stim = self.stim_domain['intensity'][EH.argmin()]
+            # Get coordinates of stimulus properties that minimize entropy.
+            index = np.unravel_index(EH.argmin(), EH.shape)
+            coords = EH[index].coords
+            stim = {k: v.item() for k, v in coords.items()}
             self.entropy = EH.min().item()
         elif stim_selection == 'min_n_entropy':
             index = np.argsort(EH)[:4]
