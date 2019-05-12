@@ -63,40 +63,36 @@ class QuestPlus:
         return prior_
 
     def _gen_likelihoods(self) -> xr.DataArray:
+        outcome_dim_name = list(self.outcome_domain.keys())[0]
+        outcome_values = list(self.outcome_domain.values())[0]
+
         if self.func in ['weibull', 'csf']:
             if self.func == 'weibull':
                 f = psychometric_function.weibull
             else:
                 f = psychometric_function.csf
 
-            pf_resp_corr = f(**self.stim_domain,
+            prop_correct = f(**self.stim_domain,
                              **self.param_domain,
                              scale=self.stim_scale)
 
-            pf_resp_incorr = 1 - pf_resp_corr
+            prop_incorrect = 1 - prop_correct
 
-            # likelihood_dim = (len(self.outcome_domain['response']),
-            #                   *[len(x) for x in self.stim_domain.values()],
-            #                   *[len(x) for x in self.param_domain.values()])
-            likelihood_dim = [len(self.outcome_domain['response'])]
-            likelihood_dim.extend(pf_resp_corr.shape)
+            # Now this is a bit awkward. We concatenate the psychometric
+            # functions for the different responses. To do that, we first have
+            # to add an additional dimension.
+            # TODO: There's got to be a neater way to do this?!
+            corr_resp_dim = {outcome_dim_name: [outcome_values[0]]}
+            inccorr_resp_dim = {outcome_dim_name: [outcome_values[1]]}
 
-            likelihoods = np.empty(likelihood_dim)
-            likelihoods[0, :] = pf_resp_corr
-            likelihoods[1, :] = pf_resp_incorr
+            prop_correct = prop_correct.expand_dims(corr_resp_dim)
+            prop_incorrect = prop_incorrect.expand_dims(inccorr_resp_dim)
 
-            dims = (*self.outcome_domain.keys(),
-                    *self.stim_domain.keys(),
-                    *self.param_domain.keys())
-            coords = dict(**self.outcome_domain,
-                          **self.stim_domain,
-                          **self.param_domain)
+            pf_values = xr.concat([prop_correct, prop_incorrect],
+                                  dim=outcome_dim_name,
+                                  coords=self.outcome_domain)
         else:
             raise ValueError('Unknown psychometric function name specified.')
-
-        pf_values = xr.DataArray(data=likelihoods,
-                                 dims=dims,
-                                 coords=coords)
 
         return pf_values
 

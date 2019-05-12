@@ -14,13 +14,13 @@ def test_threshold():
                           -19, -17, -17, -18, -18, -18, -19, -19, -19, -19,
                           -19, -19]
 
-    responses = ["Correct", "Correct", "Correct", "Correct", "Incorrect",
-                 "Incorrect", "Correct", "Correct", "Correct", "Correct",
-                 "Correct", "Correct", "Correct", "Correct", "Incorrect",
-                 "Correct", "Correct", "Incorrect", "Correct", "Correct",
-                 "Incorrect", "Correct", "Correct", "Correct", "Correct",
-                 "Correct", "Correct", "Correct", "Correct", "Correct",
-                 "Correct", "Correct"]
+    responses = ['Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Incorrect', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Correct', 'Correct', 'Incorrect', 'Correct', 'Correct',
+                 'Incorrect', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct']
 
     expected_mode_threshold = -20
     expected_mean_threshold = -20.39360311638961
@@ -38,7 +38,7 @@ def test_threshold():
     for expected_contrast, response in zip(expected_contrasts, responses):
         next_stim = q.next_stim(stim_selection='min_entropy')
         assert next_stim == dict(intensity=expected_contrast)
-        q.update(stimulus=next_stim,
+        q.update(stim=next_stim,
                  outcome=dict(response=response))
 
     assert np.allclose(q.get_param_estimates(method='mode')['threshold'],
@@ -93,7 +93,7 @@ def test_threshold_slope():
     for expected_contrast, response in zip(expected_contrasts, responses):
         next_stim = q.next_stim(stim_selection='min_entropy')
         assert next_stim == dict(intensity=expected_contrast)
-        q.update(stimulus=next_stim,
+        q.update(stim=next_stim,
                  outcome=dict(response=response))
 
     fitted_mode_params = q.get_param_estimates(method='mode')
@@ -170,7 +170,7 @@ def test_threshold_slope_lapse():
     for expected_contrast, response in zip(expected_contrasts, responses):
         next_stim = q.next_stim(stim_selection='min_entropy')
         assert next_stim == dict(intensity=expected_contrast)
-        q.update(stimulus=next_stim,
+        q.update(stim=next_stim,
                  outcome=dict(response=response))
 
     fitted_mode_params = q.get_param_estimates(method='mode')
@@ -181,10 +181,6 @@ def test_threshold_slope_lapse():
                        expected_mode_slope)
     assert np.allclose(fitted_mode_params['lapse_rate'],
                        expected_mode_lapse)
-
-    print(q.get_param_estimates(method='mean'))
-
-
 
 
 # def test_mean_sd_lapse():
@@ -210,38 +206,83 @@ def test_threshold_slope_lapse():
 #                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
 
 
-def test_contrast_sensitivity():
+def test_spatial_contrast_sensitivity():
     # Watson 2017, Example 4:
     # "Contrast sensitivity function {2, 3, 2}"
 
-    true_params = dict(min_thresh=-35,
-                       c0=-50,
-                       cf=1.2,
-                       slope=3,
-                       lower_asymptote=0.5,
-                       lapse_rate=0.01)
-
     spatial_freqs = np.arange(0, 40+2, 2)
     contrasts = np.arange(-50, 0+2, 2)
+    temporal_freq = 0
 
     stim_domain = dict(contrast=contrasts,
-                       spatial_freq=spatial_freqs)
+                       spatial_freq=spatial_freqs,
+                       temporal_freq=temporal_freq)
 
     min_threshs = np.arange(-50, -30+2, 2)
     c0s = np.arange(-60, -40+2, 2)
     cfs = np.arange(0.8, 1.6+0.2, 0.2)
+    cw = 0
+    slope = 3
+    lower_asymptote = 0.5
+    lapse_rate = 0.01
 
     param_domain = dict(min_thresh=min_threshs,
                         c0=c0s,
-                        cf=cfs)
+                        cf=cfs,
+                        cw=cw,
+                        slope=slope,
+                        lower_asymptote=lower_asymptote,
+                        lapse_rate=lapse_rate)
 
     outcome_domain = dict(response=['Correct', 'Incorrect'])
     f = 'csf'
     scale = 'dB'
 
+    expected_mode_min_thresh = -32
+    expected_mode_c0 = -56
+    expected_mode_cf = 1.4
+
+    expected_contrasts = [0,  -4,   0,   0, -38,   0, -40,   0, -26, -26,
+                          0, -36, -36,   0, -26, -26,  -2, -26,  -6, -26,
+                          0, -26,   0, -26, -32, -32, -34, -34,   0, -26,
+                          0, -26]
+
+    expected_spatial_freqs = [40, 40, 34, 36,  0, 38,  0, 38, 18, 18, 40,  0,
+                               0, 40, 20, 20, 40,  22, 40, 20, 40, 18, 40, 18,
+                               0,  0,  0,  0, 40, 18, 38, 18]
+
+    responses = ['Correct', 'Incorrect', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Incorrect', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct',  'Incorrect', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Incorrect', 'Incorrect',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Incorrect', 'Incorrect', 'Correct',
+                 'Correct', 'Correct']
+
     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
-    q.next_stim()
+
+    for x in zip(expected_contrasts, expected_spatial_freqs, responses):
+        expected_contrast, expected_spatial_freq, response = x
+
+        next_stim = q.next_stim(stim_selection='min_entropy')
+        assert next_stim == dict(contrast=expected_contrast,
+                                 spatial_freq=expected_spatial_freq,
+                                 temporal_freq=0)
+        q.update(stim=next_stim,
+                 outcome=dict(response=response))
+
+    fitted_mode_params = q.get_param_estimates(method='mode')
+
+
+    assert np.allclose(fitted_mode_params['min_thresh'],
+                       expected_mode_min_thresh)
+    assert np.allclose(fitted_mode_params['c0'],
+                       expected_mode_c0)
+    assert np.allclose(fitted_mode_params['cf'],
+                       expected_mode_cf)
+
 
 if __name__ == '__main__':
-    test_threshold_slope_lapse()
+    # test_threshold()
+    test_spatial_contrast_sensitivity()

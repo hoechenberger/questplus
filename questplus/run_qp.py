@@ -42,7 +42,7 @@ def plot(q):
                      slope=param_estimates_mean['slope'],
                      lower_asymptote=param_estimates_mean['lower_asymptote'],
                      lapse_rate=param_estimates_mean['lapse_rate'],
-                     scale='log10')[:, 0, 0, 0]
+                     scale='log10').squeeze()
 
     # y_mode = weibull(intensity=intensities, threshold=param_estimates_mode['threshold'],
     #                  slope=param_estimates_mode['slope'],
@@ -157,8 +157,9 @@ for trial_no in range(1, 20+1):
     if trial_no == 1:
         intensity = intensities[3]  # start with a relatively high concentration
     else:
-        intensity = q.next_stim(stim_selection='min_n_entropy')
+        intensity = q.next_stim(stim_selection='min_entropy')['intensity']
     # intensity = np.random.choice(stim_domain, 1)
+
 
     print(f'\n ==> Trial {trial_no}, intensity: {intensity}')
 
@@ -180,7 +181,7 @@ for trial_no in range(1, 20+1):
         if response_ == 'Yes':
             print('   --> Inserting FALSE-ALARM...')
     # response_ = 'No'
-    q.update(stimulus=dict(intensity=intensity),
+    q.update(stim=dict(intensity=intensity),
              outcome=dict(response=response_))
     print(f'   Response: {response_}, entropy: {q.entropy}')
 
