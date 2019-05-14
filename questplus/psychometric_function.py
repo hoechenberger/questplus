@@ -1,9 +1,7 @@
 from typing import Union, Iterable
 import numpy as np
-import xarray as xr
-
-
 # import scipy.stats
+import xarray as xr
 
 
 def weibull(*,

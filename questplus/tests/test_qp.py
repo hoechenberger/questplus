@@ -186,24 +186,88 @@ def test_threshold_slope_lapse():
 # def test_mean_sd_lapse():
 #     # Watson 2017, Example 3:
 #     # "Estimation of mean, standard deviation, and lapse {1, 3, 2}"
-#     true_params = dict(mean=1,
-#                        sd=3,
-#                        lapse_rate=0.02)
+#     expected_mode_mean = 1
+#     expected_mode_sd = 3
+#     expected_mode_lapse_rate = 0.02
 #
+#     # Stimulus domain.
 #     orientation = np.arange(-10, 10+1)
-#     stim_domain = dict(intensity=orientation)
+#     stim_domain = dict(orientation=orientation)
 #
+#     # Parameter domain.
 #     orientation = np.arange(-5, 5+1)
 #     sd = np.arange(1, 10+1)
 #     lapse_rate = np.arange(0, 0.04 + 0.01, 0.01)
 #     param_domain = dict(mean=orientation, sd=sd, lapse_rate=lapse_rate)
 #
-#     outcome_domain = ['Correct', 'Incorrect']
+#     # Outcome domain.
+#     outcome_domain = dict(response=['Correct', 'Incorrect'])
+#
 #     f = 'norm_cdf'
-#     scale = 'dB'
+#     scale = 'linear'
+#
+#     expected_orientations = [ 0, -1,  2, -2,  2,  3,  3, -5,  3,  3,  3,  3,
+#                              -7, -7, -7, -7,  4, -7, 4,  4,  4, -8, -8, -8,
+#                               4, -8,  4, -8, -7,  4, -7, -7,  4, -7,  4, -7,
+#                              -6,  3, -4, -5,  3,  3, -7,  2,  2,  1,  0, -7,
+#                              -6, -6, -6,  2, -5,  2, -6, -5,  3, -5, -5,  3,
+#                               4, -5, -5,  4, -4, -4, -4, -4,  4,  3,  3,  4,
+#                               5,  5, -5,  5, -5, -5,  4,  5,  5, -5, -4, -4,
+#                              -4, -4,  5, -4, -4, -3,  4,  4,  5,  5, -4,  5,
+#                              -4, -4,  5,  4,  5,  5, -5,  5, -4, -4, -4, -4,
+#                               5, -4,  5,  4, -4,  4, -4, -4, -4,  4, -4, -4,
+#                              -4,  4,  4, -4,  4,  4,  4, -4]
+#
+#     responses = ['Correct', 'Incorrect', 'Incorrect', 'Correct',
+#                  'Correct', 'Correct', 'Correct', 'Correct',
+#                  'Correct', 'Correct', 'Incorrect', 'Correct',
+#                  'Incorrect', 'Incorrect', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Correct', 'Incorrect', 'Correct',
+#                  'Correct', 'Incorrect', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Incorrect', 'Correct', 'Incorrect',
+#                  'Incorrect', 'Correct', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Incorrect', 'Correct', 'Incorrect',
+#                  'Incorrect', 'Correct', 'Incorrect', 'Correct',
+#                  'Correct', 'Correct', 'Incorrect', 'Correct',
+#                  'Correct', 'Correct', 'Incorrect', 'Incorrect',
+#                  'Incorrect', 'Incorrect', 'Incorrect', 'Correct',
+#                  'Incorrect', 'Incorrect', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Incorrect', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Incorrect', 'Incorrect', 'Correct',
+#                  'Incorrect', 'Incorrect', 'Incorrect', 'Correct',
+#                  'Correct', 'Correct', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Correct', 'Incorrect', 'Correct',
+#                  'Incorrect', 'Incorrect', 'Incorrect', 'Correct',
+#                  'Correct', 'Incorrect', 'Incorrect', 'Incorrect',
+#                  'Incorrect', 'Incorrect', 'Correct', 'Incorrect',
+#                  'Incorrect', 'Correct', 'Correct', 'Incorrect',
+#                  'Correct', 'Correct', 'Incorrect', 'Correct',
+#                  'Incorrect', 'Correct', 'Correct', 'Incorrect',
+#                  'Correct', 'Correct', 'Incorrect', 'Correct',
+#                  'Incorrect', 'Incorrect', 'Incorrect', 'Incorrect',
+#                  'Correct', 'Correct', 'Correct', 'Correct',
+#                  'Incorrect', 'Correct', 'Incorrect', 'Incorrect',
+#                  'Incorrect', 'Correct', 'Incorrect', 'Incorrect',
+#                  'Incorrect', 'Incorrect', 'Correct', 'Correct',
+#                  'Correct', 'Correct', 'Correct', 'Incorrect']
 #
 #     q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
 #                   outcome_domain=outcome_domain, func=f, stim_scale=scale)
+#
+#     for expected_orientation, response in zip(expected_orientations, responses):
+#         next_stim = q.next_stim(stim_selection='min_entropy')
+#         assert next_stim == dict(orientation=expected_orientation)
+#         q.update(stim=next_stim,
+#                  outcome=dict(response=response))
+#
+#     fitted_mode_params = q.get_param_estimates(method='mode')
+#
+#     assert np.allclose(fitted_mode_params['mean'],
+#                        expected_mode_mean)
+#     assert np.allclose(fitted_mode_params['sd'],
+#                        expected_mode_sd)
+#     assert np.allclose(fitted_mode_params['lapse_rate'],
+#                        expected_mode_lapse_rate)
 
 
 def test_spatial_contrast_sensitivity():
@@ -214,10 +278,12 @@ def test_spatial_contrast_sensitivity():
     contrasts = np.arange(-50, 0+2, 2)
     temporal_freq = 0
 
+    # Stimulus domain.
     stim_domain = dict(contrast=contrasts,
                        spatial_freq=spatial_freqs,
                        temporal_freq=temporal_freq)
 
+    # Parameter domain.
     min_threshs = np.arange(-50, -30+2, 2)
     c0s = np.arange(-60, -40+2, 2)
     cfs = np.arange(0.8, 1.6+0.2, 0.2)
@@ -234,6 +300,7 @@ def test_spatial_contrast_sensitivity():
                         lower_asymptote=lower_asymptote,
                         lapse_rate=lapse_rate)
 
+    # Outcome domain.
     outcome_domain = dict(response=['Correct', 'Incorrect'])
     f = 'csf'
     scale = 'dB'
@@ -274,7 +341,6 @@ def test_spatial_contrast_sensitivity():
 
     fitted_mode_params = q.get_param_estimates(method='mode')
 
-
     assert np.allclose(fitted_mode_params['min_thresh'],
                        expected_mode_min_thresh)
     assert np.allclose(fitted_mode_params['c0'],
@@ -284,5 +350,7 @@ def test_spatial_contrast_sensitivity():
 
 
 if __name__ == '__main__':
-    # test_threshold()
+    test_threshold()
+    test_threshold_slope_lapse()
+    # test_mean_sd_lapse()
     test_spatial_contrast_sensitivity()
