@@ -1,0 +1,5 @@
+include LICENSE
+include AUTHORS
+include README.md
+include versioneer.py
+include questplus/_version.py
