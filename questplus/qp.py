@@ -12,7 +12,7 @@ class QuestPlus:
                  param_domain: dict,
                  outcome_domain: dict,
                  prior: Optional[dict] = None,
-                 func: str = 'weibull',
+                 func: str,
                  stim_scale: str,
                  stim_selection_method: str = 'min_entropy',
                  stim_selection_options: Optional[dict] = None,
