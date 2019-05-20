@@ -2,6 +2,11 @@
 
 This is a simple implementation of the QUEST+ algorithm in Python.
 
+## Requirements
+- Python 3.6+
+- `xarray`
+- `scipy`
+
 ## Usage
 ```python
 import numpy as np
