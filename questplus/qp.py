@@ -89,7 +89,7 @@ class QuestPlus:
         self.param_estimation_method = param_estimation_method
 
         self.resp_history = list()
-        self.stim_history = {p: [] for p in self.stim_domain.keys()}
+        self.stim_history = list()
         self.entropy = np.nan
 
     @staticmethod
@@ -183,8 +183,7 @@ class QuestPlus:
         self.posterior /= self.posterior.sum()
 
         # Log the results, too.
-        for stim_property, stim_val in stim.items():
-            self.stim_history[stim_property].append(stim_val)
+        self.stim_history.append(stim)
         self.resp_history.append(outcome)
 
     @property
