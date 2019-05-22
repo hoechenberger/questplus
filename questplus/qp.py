@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 import xarray as xr
 import numpy as np
 from copy import deepcopy
@@ -293,3 +293,62 @@ class QuestPlus:
                 raise ValueError('Unknown method parameter.')
 
         return param_estimates
+
+
+class QuestPlusWeibull(QuestPlus):
+    def __init__(self, *,
+                 intensities: Sequence,
+                 thresholds: Sequence,
+                 slopes: Sequence,
+                 lower_asymptotes: Sequence,
+                 lapse_rates: Sequence,
+                 responses: Sequence = ('Yes', 'No'),
+                 stim_scale: str = 'log10',
+                 stim_selection_method: str = 'min_entropy',
+                 stim_selection_options: Optional[dict] = None,
+                 param_estimation_method: str = 'mean'):
+        super().__init__(stim_domain=dict(intensity=intensities),
+                         param_domain=dict(threshold=thresholds,
+                                           slope=slopes,
+                                           lower_asymptote=lower_asymptotes,
+                                           lapse_rate=lapse_rates),
+                         outcome_domain=dict(response=responses),
+                         stim_scale=stim_scale,
+                         stim_selection_method=stim_selection_method,
+                         stim_selection_options=stim_selection_options,
+                         param_estimation_method=param_estimation_method,
+                         func='weibull')
+
+    @property
+    def intensities(self):
+        return self.stim_domain['intensity']
+
+    @property
+    def thresholds(self):
+        return self.param_domain['threshold']
+
+    @property
+    def slopes(self):
+        return self.param_domain['slope']
+
+    @property
+    def lower_asymptotes(self):
+        return self.param_domain['lower_asymptote']
+
+    @property
+    def lapse_rates(self):
+        return self.param_domain['lapse_rate']
+
+    @property
+    def responses(self):
+        return self.outcome_domain['response']
+
+    @property
+    def next_intensity(self):
+        return super().next_stim['intensity']
+
+    def update(self, *,
+               intensity: float,
+               response: str) -> None:
+        super().update(stim=dict(intensity=intensity),
+                       outcome=dict(response=response))
