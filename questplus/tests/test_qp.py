@@ -1,5 +1,5 @@
 import numpy as np
-from questplus.qp import QuestPlus
+from questplus.qp import QuestPlus, QuestPlusWeibull
 
 
 def test_threshold():
@@ -370,9 +370,65 @@ def test_spatial_contrast_sensitivity():
                        expected_mode_cf)
 
 
+def test_weibull():
+    threshold = np.arange(-40, 0 + 1)
+    slope, guess, lapse = 3.5, 0.5, 0.02
+    contrasts = threshold.copy()
+
+    expected_contrasts = [-18, -22, -25, -28, -30, -22, -13, -15, -16, -18,
+                          -19, -20, -21, -22, -23, -19, -20, -20, -18, -18,
+                          -19, -17, -17, -18, -18, -18, -19, -19, -19, -19,
+                          -19, -19]
+
+    responses = ['Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Incorrect', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Incorrect',
+                 'Correct', 'Correct', 'Incorrect', 'Correct', 'Correct',
+                 'Incorrect', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct', 'Correct', 'Correct', 'Correct',
+                 'Correct', 'Correct']
+
+    expected_mode_threshold = -20
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slope,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_entropy'
+    param_estimation_method = 'mode'
+
+    q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                  stim_selection_method=stim_selection_method,
+                  param_estimation_method=param_estimation_method)
+
+    q_weibull = QuestPlusWeibull(intensities=stim_domain['intensity'],
+                                 thresholds=param_domain['threshold'],
+                                 slopes=param_domain['slope'],
+                                 lower_asymptotes=param_domain['lower_asymptote'],
+                                 lapse_rates=param_domain['lapse_rate'],
+                                 responses=outcome_domain['response'],
+                                 stim_scale=scale)
+
+    for expected_contrast, response in zip(expected_contrasts, responses):
+        assert q.next_stim['intensity'] == q_weibull.next_intensity
+        assert q_weibull.next_intensity == expected_contrast
+        q.update(stim=q.next_stim,
+                 outcome=dict(response=response))
+        q_weibull.update(intensity=q_weibull.next_intensity,
+                         response=response)
+
+    assert np.allclose(q.param_estimate['threshold'],
+                       expected_mode_threshold)
+
+
 if __name__ == '__main__':
-    # test_threshold()
-    # test_threshold_slope()
-    # test_threshold_slope_lapse()
+    test_threshold()
+    test_threshold_slope()
+    test_threshold_slope_lapse()
     test_mean_sd_lapse()
     test_spatial_contrast_sensitivity()
+    test_weibull()
