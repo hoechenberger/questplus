@@ -425,6 +425,72 @@ def test_weibull():
                        expected_mode_threshold)
 
 
+def test_eq():
+    threshold = np.arange(-40, 0 + 1)
+    slope, guess, lapse = 3.5, 0.5, 0.02
+    contrasts = threshold.copy()
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slope,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_entropy'
+    param_estimation_method = 'mode'
+
+    q1 = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                   outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                   stim_selection_method=stim_selection_method,
+                   param_estimation_method=param_estimation_method)
+
+    q2 = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                   outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                   stim_selection_method=stim_selection_method,
+                   param_estimation_method=param_estimation_method)
+
+    # Add some random responses.
+    q1.update(stim=q1.next_stim, outcome=dict(response='Correct'))
+    q1.update(stim=q1.next_stim, outcome=dict(response='Incorrect'))
+    q2.update(stim=q2.next_stim, outcome=dict(response='Correct'))
+    q2.update(stim=q2.next_stim, outcome=dict(response='Incorrect'))
+
+    assert q1 == q2
+
+
+def test_json():
+    threshold = np.arange(-40, 0 + 1)
+    slope, guess, lapse = 3.5, 0.5, 0.02
+    contrasts = threshold.copy()
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slope,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_entropy'
+    param_estimation_method = 'mode'
+
+    q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                  stim_selection_method=stim_selection_method,
+                  param_estimation_method=param_estimation_method)
+
+    # Add some random responses.
+    q.update(stim=q.next_stim, outcome=dict(response='Correct'))
+    q.update(stim=q.next_stim, outcome=dict(response='Incorrect'))
+
+    q_dumped = q.to_json()
+    q_loaded = QuestPlus.from_json(q_dumped)
+
+    assert q_loaded == q
+
+    q_loaded.update(stim=q_loaded.next_stim, outcome=dict(response='Correct'))
+
+
 if __name__ == '__main__':
     test_threshold()
     test_threshold_slope()
@@ -432,3 +498,5 @@ if __name__ == '__main__':
     test_mean_sd_lapse()
     test_spatial_contrast_sensitivity()
     test_weibull()
+    test_eq()
+    test_json()
