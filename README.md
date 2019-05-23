@@ -6,6 +6,7 @@ This is a simple implementation of the QUEST+ algorithm in Python.
 - Python 3.6+
 - `xarray`
 - `scipy`
+- `json_tricks`
 
 ## Usage
 ```python
