@@ -296,6 +296,19 @@ class QuestPlus:
         return param_estimates
 
     def to_json(self) -> str:
+        """
+        Dump this `QuestPlus` instance as a JSON string which can be loaded
+        again later.
+
+        Returns
+        -------
+        A JSON dump of the current `QuestPlus` instance.
+
+        See Also
+        --------
+        from_json
+
+        """
         self_copy = deepcopy(self)
         self_copy.prior = self_copy.prior.to_dict()
         self_copy.posterior = self_copy.posterior.to_dict()
@@ -304,6 +317,19 @@ class QuestPlus:
 
     @staticmethod
     def from_json(data: str):
+        """
+        Load and recreate a `QuestPlus` instance from a JSON string.
+
+        Parameters
+        ----------
+        data
+            The JSON string, generated via :meth:`to_json`.
+
+        Returns
+        -------
+        A `QuestPlus` instance, generated from the JSON string.
+
+        """
         loaded = json_tricks.loads(data)
         loaded.prior = xr.DataArray.from_dict(loaded.prior)
         loaded.posterior = xr.DataArray.from_dict(loaded.posterior)
