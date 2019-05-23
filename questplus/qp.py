@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 import xarray as xr
 import numpy as np
+import json_tricks
 from copy import deepcopy
 
 from questplus import psychometric_function
@@ -293,6 +294,69 @@ class QuestPlus:
                 raise ValueError('Unknown method parameter.')
 
         return param_estimates
+
+    def to_json(self) -> str:
+        self_copy = deepcopy(self)
+        self_copy.prior = self_copy.prior.to_dict()
+        self_copy.posterior = self_copy.posterior.to_dict()
+        self_copy.likelihoods = self_copy.likelihoods.to_dict()
+        return json_tricks.dumps(self_copy)
+
+    @staticmethod
+    def from_json(data: str):
+        loaded = json_tricks.loads(data)
+        loaded.prior = xr.DataArray.from_dict(loaded.prior)
+        loaded.posterior = xr.DataArray.from_dict(loaded.posterior)
+        loaded.likelihoods = xr.DataArray.from_dict(loaded.likelihoods)
+        return loaded
+
+    def __eq__(self, other):
+        if not self.likelihoods.equals(other.likelihoods):
+            return False
+
+        if not self.prior.equals(other.prior):
+            return False
+
+        if not self.posterior.equals(other.posterior):
+            return False
+
+        for param_name in self.param_domain.keys():
+            if not np.array_equal(self.param_domain[param_name],
+                                  other.param_domain[param_name]):
+                return False
+
+        for stim_property in self.stim_domain.keys():
+            if not np.array_equal(self.stim_domain[stim_property],
+                                  other.stim_domain[stim_property]):
+                return False
+
+        for outcome_name in self.outcome_domain.keys():
+            if not np.array_equal(self.outcome_domain[outcome_name],
+                                  other.outcome_domain[outcome_name]):
+                return False
+
+        if self.stim_selection != other.stim_selection:
+            return False
+
+        if self.stim_selection_options != other.stim_selection_options:
+            return False
+
+        if self.stim_scale != other.stim_scale:
+            return False
+
+        if self.stim_history != other.stim_history:
+            return False
+
+        if self.resp_history != other.resp_history:
+            return False
+
+        if self.param_estimation_method != other.param_estimation_method:
+            return False
+
+        if self.func != other.func:
+            return False
+
+        return True
 
 
 class QuestPlusWeibull(QuestPlus):
