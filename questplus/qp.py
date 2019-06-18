@@ -313,7 +313,7 @@ class QuestPlus:
         self_copy.prior = self_copy.prior.to_dict()
         self_copy.posterior = self_copy.posterior.to_dict()
         self_copy.likelihoods = self_copy.likelihoods.to_dict()
-        return json_tricks.dumps(self_copy)
+        return json_tricks.dumps(self_copy, allow_nan=True)
 
     @staticmethod
     def from_json(data: str):
