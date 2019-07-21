@@ -491,6 +491,37 @@ def test_json():
     q_loaded.update(stim=q_loaded.next_stim, outcome=dict(response='Correct'))
 
 
+def test_marginal_posterior():
+    contrasts = np.arange(-40, 0 + 1)
+    slope = np.arange(2, 5 + 1)
+    lower_asymptote = (0.5,)
+    lapse_rate = np.arange(0, 0.04 + 0.01, 0.01)
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=contrasts, slope=slope,
+                        lower_asymptote=lower_asymptote, lapse_rate=lapse_rate)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    func = 'weibull'
+    stim_scale = 'dB'
+
+    q = QuestPlus(stim_domain=stim_domain,
+                  param_domain=param_domain,
+                  outcome_domain=outcome_domain,
+                  func=func, stim_scale=stim_scale)
+
+    marginal_posterior = q.marginal_posterior
+
+    assert np.allclose(marginal_posterior['threshold'],
+                       np.ones(len(contrasts)) / len(contrasts))
+    assert np.allclose(marginal_posterior['slope'],
+                       np.ones(len(slope)) / len(slope))
+    assert np.allclose(marginal_posterior['lower_asymptote'],
+                       np.ones(len(lower_asymptote)) / len(lower_asymptote))
+    assert np.allclose(marginal_posterior['lapse_rate'],
+                       np.ones(len(lapse_rate)) / len(lapse_rate))
+
+
 if __name__ == '__main__':
     test_threshold()
     test_threshold_slope()
@@ -500,3 +531,4 @@ if __name__ == '__main__':
     test_weibull()
     test_eq()
     test_json()
+    test_marginal_posterior()
