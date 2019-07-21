@@ -2,7 +2,7 @@
 
 [![Latest PyPI Release](https://img.shields.io/pypi/v/questplus.svg)](https://pypi.org/project/questplus/)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/questplus.svg)](https://anaconda.org/conda-forge/questplus)
-
+[![Travis Build Status](https://travis-ci.com/hoechenberger/questplus.svg?branch=master)](https://travis-ci.com/hoechenberger/questplus)
 This is a simple implementation of the QUEST+ algorithm in Python.
 
 ## Requirements
