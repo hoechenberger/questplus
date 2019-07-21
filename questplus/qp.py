@@ -295,6 +295,28 @@ class QuestPlus:
 
         return param_estimates
 
+    @property
+    def marginal_posterior(self) -> dict:
+        """
+        Retrieve the a dictionary of marginal posterior probability
+        density functions (PDFs).
+
+        Returns
+        -------
+        A dictionary of marginal PDFs, where the dictionary keys correspond to
+        the parameter names.
+
+        """
+        marginal_posterior = dict()
+        for param_name in self.param_domain.keys():
+            marginalized_out_params = list(self.param_domain.keys())
+            marginalized_out_params.remove(param_name)
+            marginal_posterior[param_name] = (self.posterior
+                                              .sum(dim=marginalized_out_params)
+                                              .values)
+
+        return marginal_posterior
+
     def to_json(self) -> str:
         """
         Dump this `QuestPlus` instance as a JSON string which can be loaded
