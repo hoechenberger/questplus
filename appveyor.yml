@@ -1,0 +1,35 @@
+build: off
+
+environment:
+  MINICONDA: C:\\Miniconda3-x64
+  matrix:
+    - CONDA_PYTHON_VERSION: "3.6"
+    - CONDA_PYTHON_VERSION: "3.7"
+
+init:
+  - "ECHO %CONDA_PYTHON_VERSION% %MINICONDA%"
+  - call %MINICONDA%\Scripts\activate.bat
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - "conda create -n questplus -c conda-forge python=%CONDA_PYTHON_VERSION% pytest numpy scipy xarray json_tricks"
+  - call conda activate questplus
+#  - conda list
+
+install:
+  - python setup.py build
+
+  # Build & install sdist.
+  - python setup.py sdist
+#  - pip install --no-deps dist/questplus-*.zip
+#  - pip uninstall --yes questplus
+
+  # Build & install wheel.
+  - python setup.py bdist_wheel
+#  - pip install --no-deps dist/questplus-*.whl
+#  - pip uninstall --yes questplus
+
+  - pip install .
+
+test_script:
+  - py.test
