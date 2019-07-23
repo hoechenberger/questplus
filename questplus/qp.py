@@ -204,7 +204,8 @@ class QuestPlus:
 
         Returns
         -------
-        The stimulus to present next.
+        dict
+            The stimulus to present next.
 
         """
         new_posterior = self.posterior * self.likelihoods
@@ -270,8 +271,9 @@ class QuestPlus:
 
         Returns
         -------
-        A dictionary of parameter estimates, where the dictionary keys
-        correspond to the parameter names.
+        dict
+            A dictionary of parameter estimates, where the dictionary keys
+            correspond to the parameter names.
 
         """
         method = self.param_estimation_method
@@ -303,8 +305,9 @@ class QuestPlus:
 
         Returns
         -------
-        A dictionary of marginal PDFs, where the dictionary keys correspond to
-        the parameter names.
+        dict
+            A dictionary of marginal PDFs, where the dictionary keys correspond
+            to the parameter names.
 
         """
         marginal_posterior = dict()
@@ -324,7 +327,8 @@ class QuestPlus:
 
         Returns
         -------
-        A JSON dump of the current `QuestPlus` instance.
+        str
+            A JSON dump of the current `QuestPlus` instance.
 
         See Also
         --------
@@ -349,7 +353,12 @@ class QuestPlus:
 
         Returns
         -------
-        A `QuestPlus` instance, generated from the JSON string.
+        QuestPlus
+            A `QuestPlus` instance, generated from the JSON string.
+
+        See Also
+        --------
+        to_json
 
         """
         loaded = json_tricks.loads(data)
