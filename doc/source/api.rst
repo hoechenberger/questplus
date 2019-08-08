@@ -1,5 +1,5 @@
-Welcome to questplus's documentation!
-=====================================
+API  Documentation
+******************
 
 .. toctree::
    :maxdepth: 2

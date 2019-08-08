@@ -27,7 +27,7 @@ def weibull(*,
 
     lower_asymptote
         The lower asymptote, :math:`\gamma`, which is equivalent to the
-        false-alarm rate in a yes-no task, or :math:`\frac{1}{n}` in an
+        false-alarm rate in a yes-no task, or :math:`\\frac{1}{n}` in an
         :math:`n`-AFC task.
 
     lapse_rate
@@ -43,6 +43,21 @@ def weibull(*,
     p
         The psychometric function evaluated at the specified intensities for
         all parameters combinations.
+
+    Notes
+    -----
+    An appropriate parametrization of the function is chosen based on the
+    `scale` keyword argument. Specifically, the following parametrizations
+    are used:
+
+        scale='linear'
+            :math:`p = 1 - \delta - (1 - \gamma - \delta)\\, e^{-\\left (\\frac{x}{t} \\right )^\\beta}`
+
+        scale='log10'
+            :math:`p = 1 - \delta - (1 - \gamma - \delta)\\, e^{-10^{\\beta (x - t)}}`
+
+        scale='dB':
+            :math:`p = 1 - \delta - (1 - \gamma - \delta)\\, e^{-10^{\\frac{\\beta}{20} (x - t)}}`
 
     """
     intensity = np.atleast_1d(intensity)
