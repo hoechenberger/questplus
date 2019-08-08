@@ -1,9 +1,10 @@
-Welcome to questplus's documentation!
-=====================================
+`questplus`, a simple QUEST+ implementation in Python
+=====================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-    QuestPlus <qp.rst>
-    Psychometric functions <psychometric_function.rst>
-    Utils <utils.rst>
+    Requirements & installation <installation.md>
+    Usage example <usage_example.md>
+
+    API <api.rst>
