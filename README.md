@@ -8,4 +8,4 @@
 This is a simple implementation of the QUEST+ algorithm in Python.
 
 ## Documentation
-Please find the documentation at [questplus.readthedocs.io](https://questplus.readthedocs.io/en/doc/index.html).
+Please find the documentation at [questplus.readthedocs.io](https://questplus.readthedocs.io/en/latest/index.html).
