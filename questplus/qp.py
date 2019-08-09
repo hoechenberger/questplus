@@ -200,12 +200,7 @@ class QuestPlus:
         Retrieve the stimulus to present next.
 
         The stimulus will be selected based on the method in
-        `self.stim_selection`.
-
-        Returns
-        -------
-        dict
-            The stimulus to present next.
+        ``self.stim_selection``.
 
         """
         new_posterior = self.posterior * self.likelihoods
@@ -267,13 +262,10 @@ class QuestPlus:
         Retrieve the final parameter estimates after the QUEST+  run.
 
         The parameters will be calculated according to
-        `self.param_estimation_method`.
+        ``self.param_estimation_method``.
 
-        Returns
-        -------
-        dict
-            A dictionary of parameter estimates, where the dictionary keys
-            correspond to the parameter names.
+        This returns a dictionary of parameter estimates, where the dictionary
+        keys correspond to the parameter names.
 
         """
         method = self.param_estimation_method
@@ -303,11 +295,8 @@ class QuestPlus:
         Retrieve the a dictionary of marginal posterior probability
         density functions (PDFs).
 
-        Returns
-        -------
-        dict
-            A dictionary of marginal PDFs, where the dictionary keys correspond
-            to the parameter names.
+        This returns a  dictionary of marginal PDFs, where the dictionary keys
+        correspond to the parameter names.
 
         """
         marginal_posterior = dict()
@@ -344,7 +333,7 @@ class QuestPlus:
     @staticmethod
     def from_json(data: str):
         """
-        Load and recreate a `QuestPlus` instance from a JSON string.
+        Load and recreate a ``QuestPlus`` instance from a JSON string.
 
         Parameters
         ----------
@@ -354,7 +343,7 @@ class QuestPlus:
         Returns
         -------
         QuestPlus
-            A `QuestPlus` instance, generated from the JSON string.
+            A ``QuestPlus`` instance, generated from the JSON string.
 
         See Also
         --------
@@ -441,35 +430,69 @@ class QuestPlusWeibull(QuestPlus):
                          func='weibull')
 
     @property
-    def intensities(self):
+    def intensities(self) -> np.ndarray:
+        """
+        Stimulus intensity or contrast domain.
+        """
         return self.stim_domain['intensity']
 
     @property
-    def thresholds(self):
+    def thresholds(self) -> np.ndarray:
+        """
+        The threshold parameter domain.
+        """
         return self.param_domain['threshold']
 
     @property
-    def slopes(self):
+    def slopes(self) -> np.ndarray:
+        """
+        The slope parameter domain.
+        """
         return self.param_domain['slope']
 
     @property
-    def lower_asymptotes(self):
+    def lower_asymptotes(self) -> np.ndarray:
+        """
+        The lower asymptote parameter domain.
+        """
         return self.param_domain['lower_asymptote']
 
     @property
-    def lapse_rates(self):
+    def lapse_rates(self) -> np.ndarray:
+        """
+        The lapse rate parameter domain.
+        """
         return self.param_domain['lapse_rate']
 
     @property
-    def responses(self):
+    def responses(self) -> np.ndarray:
+        """
+        The response (outcome) domain.
+        """
         return self.outcome_domain['response']
 
     @property
-    def next_intensity(self):
+    def next_intensity(self) -> float:
+        """
+        The intensity or contrast to present next.
+        """
         return super().next_stim['intensity']
 
     def update(self, *,
                intensity: float,
                response: str) -> None:
+        """
+        Inform QUEST+ about a newly gathered measurement outcome for a given
+        stimulus intensity or contrast, and update the posterior accordingly.
+
+        Parameters
+        ----------
+        intensity
+            The intensity or contrast of the presented stimulus.
+
+        response
+            The observed response.
+
+        """
         super().update(stim=dict(intensity=intensity),
                        outcome=dict(response=response))

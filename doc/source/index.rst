@@ -2,7 +2,7 @@
 =====================================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
 
     Requirements & installation <installation.md>
     Usage example <usage_example.md>
