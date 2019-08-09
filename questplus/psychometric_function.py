@@ -20,23 +20,23 @@ def weibull(*,
         Stimulus values on the abscissa, :math:`x`.
 
     threshold
-        The threshold parameter, :math:`\alpha`.
+        The threshold parameter, :math:`\\alpha`.
 
     slope
-        The slope parameter, :math:`\beta`.
+        The slope parameter, :math:`\\beta`.
 
     lower_asymptote
-        The lower asymptote, :math:`\gamma`, which is equivalent to the
+        The lower asymptote, :math:`\\gamma`, which is equivalent to the
         false-alarm rate in a yes-no task, or :math:`\\frac{1}{n}` in an
         :math:`n`-AFC task.
 
     lapse_rate
-        The lapse rate, :math:`\delta`. The upper asymptote of the psychometric
-        function will be :math:`1-\delta`.
+        The lapse rate, :math:`\\delta`. The upper asymptote of the psychometric
+        function will be :math:`1-\\delta`.
 
     scale
-        The scale of the stimulus parameters. Possible values are `log10`,
-        `dB`, and `linear`.
+        The scale of the stimulus parameters. Possible values are ``log10``,
+        ``dB``, and ``linear``.
 
     Returns
     -------
