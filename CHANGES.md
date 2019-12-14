@@ -1,6 +1,7 @@
 Current development branch
 --------------------------
-* ...
+* Allow to pass priors for only some parameters
+  (the remaining parameters will be assigned an uninformative prior)
 
 v0.0.5
 ------

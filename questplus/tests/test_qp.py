@@ -1,3 +1,5 @@
+import pytest
+import scipy.stats
 import numpy as np
 from questplus.qp import QuestPlus, QuestPlusWeibull
 
@@ -522,6 +524,79 @@ def test_marginal_posterior():
                        np.ones(len(lapse_rate)) / len(lapse_rate))
 
 
+def test_prior_for_unknown_parameter():
+    threshold = np.arange(-40, 0 + 1)
+    slope, guess, lapse = 3.5, 0.5, 0.02
+    contrasts = threshold.copy()
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slope,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_entropy'
+    param_estimation_method = 'mode'
+
+    prior = dict(Foo=[1, 2, 3])
+
+    with pytest.raises(ValueError):
+        q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                      outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                      stim_selection_method=stim_selection_method,
+                      param_estimation_method=param_estimation_method,
+                      prior=prior)
+
+
+def test_prior_for_parameter_subset():
+    threshold = np.arange(-40, 0 + 1)
+    slopes = np.linspace(start=2, stop=4, num=11)
+    guess, lapse = 0.5, 0.02
+    contrasts = threshold.copy()
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slopes,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_entropy'
+    param_estimation_method = 'mode'
+
+    threshold_prior = scipy.stats.norm.pdf(contrasts, loc=-20, scale=10)
+    threshold_prior /= threshold_prior.sum()
+    
+    slope_prior = scipy.stats.norm.pdf(slopes, loc=3, scale=0.5)
+    slope_prior /= slope_prior.sum()
+
+    prior = dict(threshold=threshold_prior,
+                 slope=slope_prior)
+
+    q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                  stim_selection_method=stim_selection_method,
+                  param_estimation_method=param_estimation_method,
+                  prior=prior)
+    
+    assert np.allclose(threshold_prior,
+                       q.prior.sum(dim=['slope', 'lower_asymptote',
+                                        'lapse_rate']).values)
+
+    assert np.allclose(slope_prior,
+                       q.prior.sum(dim=['threshold', 'lower_asymptote',
+                                        'lapse_rate']).values)
+
+    assert np.isclose(1,
+                      q.prior.sum(dim=['threshold', 'slope',
+                                       'lapse_rate']).sum())
+
+    assert np.isclose(1,
+                      q.prior.sum(dim=['threshold', 'slope',
+                                       'lower_asymptote']).sum())
+
+
 if __name__ == '__main__':
     test_threshold()
     test_threshold_slope()
@@ -532,3 +607,5 @@ if __name__ == '__main__':
     test_eq()
     test_json()
     test_marginal_posterior()
+    test_prior_for_unknown_parameter()
+    test_prior_for_parameter_subset()
