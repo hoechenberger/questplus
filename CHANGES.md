@@ -1,5 +1,5 @@
-Current development branch
---------------------------
+v2019.1
+-------
 * Allow to pass priors for only some parameters
   (the remaining parameters will be assigned an uninformative prior)
 * Add more docstrings, fix typo in usage example
