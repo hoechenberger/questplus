@@ -20,7 +20,7 @@ param_domain = dict(threshold=thresholds,
 
 # Outcome (response) domain.
 responses = ['Yes', 'No']
-outcome_domain = dict(respose=responses)
+outcome_domain = dict(response=responses)
 
 # Further parameters.
 func = 'weibull'
@@ -48,8 +48,8 @@ for current_trial_number in range(1, trial_count+1):
     # outcome = dict(response='No')
     q.update(stim=next_stim, outcome=outcome)
 
-# Print parameter estimates.
-with np.printoptions(precision=3, suppress=True):
-    print('f\nParameter estimates: {q.param_estimate}')
+print(f'\nParameter estimates:\n')
+for param_name, value in q.param_estimate.items():
+    print(f'    {param_name}: {value:.3f}')
 
 ```
