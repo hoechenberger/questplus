@@ -20,7 +20,7 @@ param_domain = dict(threshold=thresholds,
 
 # Outcome (response) domain.
 responses = ['Yes', 'No']
-outcome_domain = dict(respose=responses)
+outcome_domain = dict(response=responses)
 
 # Further parameters.
 func = 'weibull'
