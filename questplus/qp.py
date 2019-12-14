@@ -110,11 +110,45 @@ class QuestPlus:
 
     def _gen_prior(self, *,
                    prior: dict) -> xr.DataArray:
+        """
+        Raises
+        ------
+        ValueError
+            If the user specifies priors for parameters that do not appear in
+            the parameter domain.
+
+        """
         prior_orig = deepcopy(prior)
 
         if prior_orig is None:
+            # Uninformative prior.
             prior = np.ones([len(x) for x in self.param_domain.values()])
+        elif set(prior_orig.keys()) - set(self.param_domain.keys()):
+            msg = (f'Mismatch between specified parameter domain and supplied '
+                   f'prior.\n'
+                   f'You specified priors for the following parameters that '
+                   f'do not appear in the parameter domain: '
+                   f'{set(prior_orig.keys()) - set(self.param_domain.keys())}')
+            raise ValueError(msg)
+        elif set(self.param_domain.keys()) - set(prior_orig.keys()):
+            # The user specified prior probabilities for only a subset
+            # of the parameters. We use those, obviously; and fill the
+            # remaining prior distributions with uninformative priors.
+            grid_dims = []
+            for param_name, param_vals in self.param_domain.items():
+                if param_name in prior_orig.keys():
+                    prior_vals = np.atleast_1d(prior_orig[param_name])
+                else:
+                    prior_vals = np.ones(len(param_vals))
+          
+                grid_dims.append(prior_vals)
+
+            prior_grid = np.meshgrid(*grid_dims,
+                                     sparse=True, indexing='ij')
+            prior = np.prod(prior_grid)
         else:
+            # A "proper" prior was specified (i.e., prior probabilities for
+            # all parameters.)
             prior_grid = np.meshgrid(*list(prior_orig.values()),
                                      sparse=True, indexing='ij')
             prior = np.prod(prior_grid)
@@ -122,6 +156,7 @@ class QuestPlus:
         # Normalize.
         prior /= prior.sum()
 
+        # Create the prior object we are actually going to use.
         dims = *self.param_domain.keys(),
         coords = dict(**self.param_domain)
         prior_ = xr.DataArray(data=prior,
