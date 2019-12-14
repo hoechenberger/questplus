@@ -5,12 +5,18 @@ matrix:
 
     - os: linux
       env: CONDA_PYTHON_VERSION=3.7
+ 
+     - os: linux
+      env: CONDA_PYTHON_VERSION=3.8
 
     - os: osx
       env: CONDA_PYTHON_VERSION=3.6
 
     - os: osx
       env: CONDA_PYTHON_VERSION=3.7
+
+    - os: osx
+      env: CONDA_PYTHON_VERSION=3.8
 
 before_install:
   - echo "Installing Miniconda environment..."
