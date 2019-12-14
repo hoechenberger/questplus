@@ -6,7 +6,7 @@ matrix:
     - os: linux
       env: CONDA_PYTHON_VERSION=3.7
  
-     - os: linux
+    - os: linux
       env: CONDA_PYTHON_VERSION=3.8
 
     - os: osx
