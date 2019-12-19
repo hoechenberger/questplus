@@ -2,7 +2,7 @@ import pytest
 import scipy.stats
 import numpy as np
 from questplus.qp import QuestPlus, QuestPlusWeibull
-
+from questplus import _constants
 
 def test_threshold():
     """
@@ -597,6 +597,66 @@ def test_prior_for_parameter_subset():
                                        'lower_asymptote']).sum())
 
 
+def test_stim_selection_options():
+    threshold = np.arange(-40, 0 + 1)
+    slope, guess, lapse = 3.5, 0.5, 0.02
+    contrasts = threshold.copy()
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slope,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_n_entropy'
+    param_estimation_method = 'mode'
+
+    common_params = dict(stim_domain=stim_domain, param_domain=param_domain,
+                         outcome_domain=outcome_domain, func=f,
+                         stim_scale=scale,
+                         stim_selection_method=stim_selection_method,
+                         param_estimation_method=param_estimation_method)
+
+    stim_selection_options = None
+    q = QuestPlus(**common_params,
+                  stim_selection_options=stim_selection_options)
+    expected = dict(n=_constants.DEFAULT_N,
+                    max_consecutive_reps=_constants.DEFAULT_MAX_CONSECUTIVE_REPS,
+                    random_seed=_constants.DEFAULT_RANDOM_SEED)
+    assert expected == q.stim_selection_options
+
+    stim_selection_options = dict(n=5)
+    q = QuestPlus(**common_params,
+                  stim_selection_options=stim_selection_options)
+    expected = dict(n=5,
+                    max_consecutive_reps=_constants.DEFAULT_MAX_CONSECUTIVE_REPS,
+                    random_seed=_constants.DEFAULT_RANDOM_SEED)
+    assert expected == q.stim_selection_options
+
+    stim_selection_options = dict(max_consecutive_reps=4)
+    q = QuestPlus(**common_params,
+                  stim_selection_options=stim_selection_options)
+    expected = dict(n=_constants.DEFAULT_N,
+                    max_consecutive_reps=4,
+                    random_seed=_constants.DEFAULT_RANDOM_SEED)
+    assert expected == q.stim_selection_options
+
+    stim_selection_options = dict(random_seed=999)
+    q = QuestPlus(**common_params,
+                  stim_selection_options=stim_selection_options)
+    expected = dict(n=_constants.DEFAULT_N,
+                    max_consecutive_reps=_constants.DEFAULT_MAX_CONSECUTIVE_REPS,
+                    random_seed=999)
+    assert expected == q.stim_selection_options
+
+    stim_selection_options = dict(n=5, max_consecutive_reps=4, random_seed=999)
+    q = QuestPlus(**common_params,
+                  stim_selection_options=stim_selection_options)
+    expected = stim_selection_options.copy()
+    assert expected == q.stim_selection_options
+
+
 if __name__ == '__main__':
     test_threshold()
     test_threshold_slope()
@@ -609,3 +669,4 @@ if __name__ == '__main__':
     test_marginal_posterior()
     test_prior_for_unknown_parameter()
     test_prior_for_parameter_subset()
+    test_stim_selection_options()

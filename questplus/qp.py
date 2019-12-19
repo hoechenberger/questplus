@@ -66,8 +66,9 @@ class QuestPlus:
             method specified via `stim_selection_method`. Currently, this can
             be used to specify the number of `n` stimuli that will yield the
             `n` smallest entropies if `stim_selection_method=min_n_entropy`,
-            and`max_consecutive_reps`, the number of times the same stimulus
-            can be presented consecutively.
+            and `max_consecutive_reps`, the number of times the same stimulus
+            can be presented consecutively. A random number generator seed
+            may be passed via `random_seed=12345`.
 
         param_estimation_method
             The method to use when deriving the final parameter estimate.
@@ -88,11 +89,33 @@ class QuestPlus:
 
         self.stim_selection = stim_selection_method
 
-        if (self.stim_selection == 'min_n_entropy' and
-                stim_selection_options is None):
-            self.stim_selection_options = dict(n=4, max_consecutive_reps=2)
+        if self.stim_selection == 'min_n_entropy':
+            from ._constants import (DEFAULT_N, DEFAULT_RANDOM_SEED,
+                                     DEFAULT_MAX_CONSECUTIVE_REPS)
+
+            if stim_selection_options is None:
+                self.stim_selection_options = dict(
+                    n=DEFAULT_N,
+                    max_consecutive_reps=DEFAULT_MAX_CONSECUTIVE_REPS,
+                    random_seed=DEFAULT_RANDOM_SEED)
+            else:
+                self.stim_selection_options = stim_selection_options.copy()
+
+                if 'n' not in stim_selection_options:
+                    self.stim_selection_options['n'] = DEFAULT_N
+                if 'max_consecutive_reps' not in stim_selection_options:
+                    self.stim_selection_options['max_consecutive_reps'] = DEFAULT_MAX_CONSECUTIVE_REPS
+                if 'random_seed' not in stim_selection_options:
+                    self.stim_selection_options['random_seed'] = DEFAULT_RANDOM_SEED
+
+            del DEFAULT_N, DEFAULT_MAX_CONSECUTIVE_REPS, DEFAULT_RANDOM_SEED
+
+            seed = self.stim_selection_options['random_seed']
+            self._rng = np.random.RandomState(seed=seed)
+            del seed
         else:
             self.stim_selection_options = stim_selection_options
+            self._rng = None
 
         self.param_estimation_method = param_estimation_method
 
@@ -271,7 +294,7 @@ class QuestPlus:
             while True:
                 # Randomly pick one index and retrieve its coordinates
                 # (stimulus parameters).
-                candidate_index = np.random.choice(indices)
+                candidate_index = self._rng.choice(indices)
                 coords = EH[candidate_index].coords
                 stim = {stim_property: stim_val.item()
                         for stim_property, stim_val in coords.items()}
