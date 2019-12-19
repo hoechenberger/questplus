@@ -21,7 +21,7 @@ install:
   - python setup.py build
 
   # Build & install sdist.
-  - python setup.py sdist
+  - python setup.py sdist --formats=zip
 #  - pip install --no-deps dist/questplus-*.zip
 #  - pip uninstall --yes questplus
 
@@ -30,7 +30,8 @@ install:
 #  - pip install --no-deps dist/questplus-*.whl
 #  - pip uninstall --yes questplus
 
-  - pip install .
+  - ps: Remove-Item –path dist, build –recurse
+  - pip install --no-deps .
 
 test_script:
   - py.test

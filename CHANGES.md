@@ -1,3 +1,10 @@
+v2019.2
+-------
+* Allow passing a random seed via `stim_selection_options` keyword
+  argument
+* Better handling of `stim_selection_options` defaults (now allows
+  to supply only a subset of options)
+
 v2019.1
 -------
 * Allow to pass priors for only some parameters
