@@ -4,6 +4,7 @@ import numpy as np
 from questplus.qp import QuestPlus, QuestPlusWeibull
 from questplus import _constants
 
+
 def test_threshold():
     """
     Watson 2017, Example 1:

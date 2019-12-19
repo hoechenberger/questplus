@@ -50,7 +50,7 @@ install:
 
   - rm -rf dist/ build/
 
-  - pip install .
+  - pip install --no-deps .
 
 script:
   - py.test
