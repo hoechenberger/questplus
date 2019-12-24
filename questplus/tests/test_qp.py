@@ -658,6 +658,27 @@ def test_stim_selection_options():
     assert expected == q.stim_selection_options
 
 
+def test_weibull_prior():
+    intensities = np.linspace(-10, 0)
+    thresholds = intensities.copy()
+    slopes = [3.5]
+    lower_asymptotes = [0.01]
+    lapse_rates = [0.01]
+
+    prior_val = scipy.stats.norm.pdf(intensities, loc=-5, scale=0.2)
+    prior_val /= prior_val.sum()
+    prior = dict(threshold=prior_val)
+
+    q = QuestPlusWeibull(intensities=intensities,
+                         thresholds=thresholds,
+                         slopes=slopes,
+                         lower_asymptotes=lower_asymptotes,
+                         lapse_rates=lapse_rates,
+                         prior=prior)
+
+    assert np.allclose(q.prior.squeeze().values, prior_val)
+
+
 if __name__ == '__main__':
     test_threshold()
     test_threshold_slope()
@@ -671,3 +692,4 @@ if __name__ == '__main__':
     test_prior_for_unknown_parameter()
     test_prior_for_parameter_subset()
     test_stim_selection_options()
+    test_weibull_prior()
