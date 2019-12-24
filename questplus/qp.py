@@ -386,6 +386,10 @@ class QuestPlus:
         self_copy.prior = self_copy.prior.to_dict()
         self_copy.posterior = self_copy.posterior.to_dict()
         self_copy.likelihoods = self_copy.likelihoods.to_dict()
+
+        if self_copy._rng is not None:  # NumPy RandomState cannot be serialized.
+            self_copy._rng = self_copy._rng.get_state()
+
         return json_tricks.dumps(self_copy, allow_nan=True)
 
     @staticmethod
@@ -412,6 +416,12 @@ class QuestPlus:
         loaded.prior = xr.DataArray.from_dict(loaded.prior)
         loaded.posterior = xr.DataArray.from_dict(loaded.posterior)
         loaded.likelihoods = xr.DataArray.from_dict(loaded.likelihoods)
+
+        if loaded._rng is not None:
+            state = deepcopy(loaded._rng)
+            loaded._rng = np.random.RandomState()
+            loaded._rng.set_state(state)
+
         return loaded
 
     def __eq__(self, other):
