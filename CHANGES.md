@@ -1,3 +1,7 @@
+v2019.4
+-------
+* Allow JSON serialization of random number generator
+
 v2019.3
 -------
 * Allow to pass a prior when instantiating `QuestPlusWeibull`

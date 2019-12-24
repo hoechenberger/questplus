@@ -494,6 +494,36 @@ def test_json():
     q_loaded.update(stim=q_loaded.next_stim, outcome=dict(response='Correct'))
 
 
+def test_json_rng():
+    threshold = np.arange(-40, 0 + 1)
+    slope, guess, lapse = 3.5, 0.5, 0.02
+    contrasts = threshold.copy()
+
+    stim_domain = dict(intensity=contrasts)
+    param_domain = dict(threshold=threshold, slope=slope,
+                        lower_asymptote=guess, lapse_rate=lapse)
+    outcome_domain = dict(response=['Correct', 'Incorrect'])
+    f = 'weibull'
+    scale = 'dB'
+    stim_selection_method = 'min_n_entropy'
+    param_estimation_method = 'mode'
+    random_seed = 5
+    stim_selection_options = dict(n=3, random_seed=random_seed)
+
+    q = QuestPlus(stim_domain=stim_domain, param_domain=param_domain,
+                  outcome_domain=outcome_domain, func=f, stim_scale=scale,
+                  stim_selection_method=stim_selection_method,
+                  param_estimation_method=param_estimation_method,
+                  stim_selection_options=stim_selection_options)
+
+    q2 = QuestPlus.from_json(q.to_json())
+
+    rand = q._rng.random_sample(10)
+    rand2 = q2._rng.random_sample(10)
+
+    assert np.allclose(rand, rand2)
+
+
 def test_marginal_posterior():
     contrasts = np.arange(-40, 0 + 1)
     slope = np.arange(2, 5 + 1)
@@ -688,6 +718,7 @@ if __name__ == '__main__':
     test_weibull()
     test_eq()
     test_json()
+    test_json_rng()
     test_marginal_posterior()
     test_prior_for_unknown_parameter()
     test_prior_for_parameter_subset()
