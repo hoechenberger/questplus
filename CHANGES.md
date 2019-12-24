@@ -1,3 +1,7 @@
+v2019.3
+-------
+* Allow to pass a prior when instantiating `QuestPlusWeibull`
+
 v2019.2
 -------
 * Allow passing a random seed via `stim_selection_options` keyword
