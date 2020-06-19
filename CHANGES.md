@@ -1,3 +1,7 @@
+development
+-----------
+* Fix definition of `norm_cdf` psychometric function, by [Alex Forrence](https://github.com/aforren1)
+
 v2019.4
 -------
 * Allow JSON serialization of random number generator

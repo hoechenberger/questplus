@@ -256,7 +256,7 @@ def norm_cdf(*,
 
     def _mu_func(x, mu, sd_, gamma, delta):
         norm = scipy.stats.norm(loc=mu, scale=sd_)
-        return delta + (1 - gamma - delta) * norm.cdf(x)
+        return gamma + (1 - gamma - delta) * norm.cdf(x)
 
     p = xr.apply_ufunc(_mu_func, x, mu, sd_, gamma, delta)
     return p
