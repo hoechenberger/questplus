@@ -122,6 +122,7 @@ class QuestPlus:
         self.resp_history = list()
         self.stim_history = list()
         self.entropy = np.nan
+        self.expected_entropies = None
 
     @staticmethod
     def _ensure_ndarray(x: dict) -> dict:
@@ -275,6 +276,7 @@ class QuestPlus:
 
         # Expected entropies for all possible stimulus parameters.
         EH = (pk * H).sum(dim=list(self.outcome_domain.keys()))
+        self.expected_entropies = EH
 
         if self.stim_selection == 'min_entropy':
             # Get coordinates of stimulus properties that minimize entropy.
