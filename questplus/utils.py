@@ -3,12 +3,14 @@ import numpy as np
 from questplus import psychometric_function
 
 
-def simulate_response(*,
-                      func: str = 'weibull',
-                      stimulus: dict,
-                      params: dict,
-                      response_domain: Sequence = ('Correct', 'Incorrect'),
-                      stim_scale: str = 'log10') -> Union[float, str]:
+def simulate_response(
+    *,
+    func: str = "weibull",
+    stimulus: dict,
+    params: dict,
+    response_domain: Sequence = ("Correct", "Incorrect"),
+    stim_scale: str = "log10",
+) -> Union[float, str]:
     """
     Simulate an observer with the given psychometric function parameters.
 
@@ -36,14 +38,14 @@ def simulate_response(*,
         A simulated response for the given stimulus.
 
     """
-    if func == 'weibull':
+    if func == "weibull":
         f = psychometric_function.weibull
-        p_correct = f(intensity=stimulus['intensity'],
-                      **params, scale=stim_scale).squeeze()
+        p_correct = f(
+            intensity=stimulus["intensity"], **params, scale=stim_scale
+        ).squeeze()
 
-        response = np.random.choice(response_domain,
-                                    p=[p_correct, 1-p_correct])
+        response = np.random.choice(response_domain, p=[p_correct, 1 - p_correct])
     else:
-        raise ValueError('Invalid function specified.')
+        raise ValueError("Invalid function specified.")
 
     return response
