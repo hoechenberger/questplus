@@ -1,0 +1,11 @@
+[tool.black]
+target-version = ['py36']
+include = '\.pyi?$'
+# 'extend-exclude' excludes files or directories in addition to the defaults
+extend-exclude = '''
+(
+  versioneer.py
+  | _version.py
+  | ^/questplus/tests/
+)
+'''
