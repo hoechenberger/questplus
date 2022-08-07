@@ -278,8 +278,13 @@ class QuestPlus:
         new_posterior /= pk
 
         # Entropies.
-        # Note that np.log(0) returns -inf; xr.DataArray.sum() has special
-        # handling for this case.
+        #
+        # Note:
+        #   - np.log(0) returns -inf (division by zero)
+        #   - the multiplcation of new_posterior with -inf values generates
+        #     NaN's
+        #   - xr.DataArray.sum() has special handling for NaN's.
+        #
         # NumPy also emits a warning, which we suppress here.
         with np.errstate(divide='ignore'):
             H = -(
