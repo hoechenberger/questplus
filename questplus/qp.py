@@ -163,18 +163,28 @@ class QuestPlus:
                     prior_vals = np.atleast_1d(prior_orig[param_name])
                 else:
                     prior_vals = np.ones(len(param_vals))
-          
+
                 grid_dims.append(prior_vals)
 
             prior_grid = np.meshgrid(*grid_dims,
                                      sparse=True, indexing='ij')
-            prior = np.prod(prior_grid)
+            prior = np.prod(
+                np.array(
+                    prior_grid,
+                    dtype='object'  # avoid warning re "ragged" array
+                )
+            )
         else:
             # A "proper" prior was specified (i.e., prior probabilities for
             # all parameters.)
             prior_grid = np.meshgrid(*list(prior_orig.values()),
                                      sparse=True, indexing='ij')
-            prior = np.prod(prior_grid)
+            prior = np.prod(
+                np.array(
+                    prior_grid,
+                    dtype='object'  # avoid warning re "ragged" array
+                )
+            )
 
         # Normalize.
         prior /= prior.sum()
@@ -268,20 +278,31 @@ class QuestPlus:
         new_posterior /= pk
 
         # Entropies.
-        # Note that np.log(0) returns nan; xr.DataArray.sum() has special
-        # handling for this case.
-        H = -((new_posterior * np.log(new_posterior))
-              .sum(dim=self.param_domain.keys()))
+        #
+        # Note:
+        #   - np.log(0) returns -inf (division by zero)
+        #   - the multiplcation of new_posterior with -inf values generates
+        #     NaN's
+        #   - xr.DataArray.sum() has special handling for NaN's.
+        #
+        # NumPy also emits a warning, which we suppress here.
+        with np.errstate(divide='ignore'):
+            H = -(
+                (new_posterior * np.log(new_posterior))
+                .sum(dim=self.param_domain.keys())
+            )
 
         # Expected entropies for all possible stimulus parameters.
         EH = (pk * H).sum(dim=list(self.outcome_domain.keys()))
 
         if self.stim_selection == 'min_entropy':
-            # Get coordinates of stimulus properties that minimize entropy.
-            index = np.unravel_index(EH.argmin(), EH.shape)
-            coords = EH[index].coords
-            stim = {stim_property: stim_val.item()
-                    for stim_property, stim_val in coords.items()}
+            # Get the stimulus properties that minimize entropy.
+            indices = EH.argmin(dim=...)
+            stim = dict()
+            for stim_property, index in indices.items():
+                stim_val = EH[stim_property][index].item()
+                stim[stim_property] = stim_val
+
             self.entropy = EH.min().item()
         elif self.stim_selection == 'min_n_entropy':
             # Number of stimuli to include (the n stimuli that yield the lowest
@@ -338,9 +359,8 @@ class QuestPlus:
                                                .sum()
                                                .item())
             elif method == 'mode':
-                index = np.unravel_index(self.posterior.argmax(),
-                                         self.posterior.shape)
-                coords = self.posterior[index].coords
+                indices = self.posterior.argmax(dim=...)
+                coords = self.posterior[indices]
                 param_estimates[param_name] = coords[param_name].item()
             else:
                 raise ValueError('Unknown method parameter.')

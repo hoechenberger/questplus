@@ -11,7 +11,7 @@ def weibull(*,
             lower_asymptote: Union[float, Iterable[float]] = 0.01,
             lapse_rate: Union[float, Iterable[float]] = 0.01,
             scale: str = 'log10') -> xr.DataArray:
-    """
+    r"""
     A Weibull psychometric function.
 
     Parameters
