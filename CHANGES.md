@@ -6,6 +6,7 @@ development
 
 * Fix definition of `norm_cdf` psychometric function, by [Alex Forrence](https://github.com/aforren1)
 * Fix various warnings and `DeprecationWarnings` coming from NumPy and xarray
+* Add Thurstone scaling
 
 v2019.4
 -------

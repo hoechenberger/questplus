@@ -1,7 +1,7 @@
 import pytest
 import scipy.stats
 import numpy as np
-from questplus.qp import QuestPlus, QuestPlusWeibull
+from questplus.qp import QuestPlus, QuestPlusWeibull, QuestPlusThurstone
 from questplus import _constants
 
 
@@ -371,6 +371,71 @@ def test_spatial_contrast_sensitivity():
                        expected_mode_c0)
     assert np.allclose(q.param_estimate['cf'],
                        expected_mode_cf)
+
+
+def test_thurstone_scaling():
+    """
+    Watson 2017, Example 6:
+    "Thurstone scaling {2, 3, 2}"
+    """
+    stim_magnitudes = np.arange(0, 1+0.1, 0.1)
+    perceptual_scale_maxs = np.arange(1, 10+1)
+    thresholds = np.arange(0, 0.9+0.1, 0.1)
+    powers = np.arange(0.1, 1+0.1, 0.1)
+
+    # Due to differences in rounding, the order of stimuli (1 or 2) is swapped on some trials
+    # compared to the paper. We therefore have to swap the example response as well.
+    #
+    # We're only testing the first 22 trials here.
+    responses = ['Second'] * 6
+    responses.extend(['Second'])       # rounding difference
+    responses.extend(['Second'] * 13)
+    responses.extend(['Second'])       # rounding difference
+    responses.extend(['First'])
+
+    expected_stims = [
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.7},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.6},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.5},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.4},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.0},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.4},
+        {'physical_magnitude_stim_1': 0.0, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.5, 'physical_magnitude_stim_2': 1.0},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.5, 'physical_magnitude_stim_2': 1.0},
+        {'physical_magnitude_stim_1': 0.5, 'physical_magnitude_stim_2': 1.0},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.5, 'physical_magnitude_stim_2': 1.0},
+        {'physical_magnitude_stim_1': 0.6, 'physical_magnitude_stim_2': 1.0},
+        {'physical_magnitude_stim_1': 0.2, 'physical_magnitude_stim_2': 0.3},
+        {'physical_magnitude_stim_1': 0.6, 'physical_magnitude_stim_2': 1.0},
+    ]
+
+    qp = QuestPlusThurstone(
+        physical_magnitudes_stim_1=stim_magnitudes,
+        physical_magnitudes_stim_2=stim_magnitudes,
+        thresholds=thresholds,
+        powers=powers,
+        perceptual_scale_maxs=perceptual_scale_maxs
+    )
+
+    for expected_stim, response in zip(expected_stims, responses):
+        assert np.isclose(
+            qp.next_stim['physical_magnitude_stim_1'],
+            expected_stim['physical_magnitude_stim_1']
+        )
+        assert np.isclose(
+            qp.next_stim['physical_magnitude_stim_2'],
+            expected_stim['physical_magnitude_stim_2']
+        )
+        qp.update(stim=qp.next_stim, response=response)
 
 
 def test_weibull():

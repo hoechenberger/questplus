@@ -1,4 +1,4 @@
-from .qp import QuestPlus, QuestPlusWeibull
+from .qp import QuestPlus, QuestPlusWeibull, QuestPlusThurstone
 
 from ._version import get_versions
 
