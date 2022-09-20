@@ -2,7 +2,6 @@ from typing import Optional, Sequence, Literal
 from copy import deepcopy
 
 import numpy as np
-from numpy.typing import ArrayLike
 import xarray as xr
 import json_tricks
 

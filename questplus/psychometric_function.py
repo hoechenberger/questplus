@@ -1,4 +1,3 @@
-from types import NoneType
 from typing import Union, Iterable
 import numpy as np
 from numpy.typing import ArrayLike

@@ -1,12 +1,6 @@
 matrix:
   include:
     - os: linux
-      env: CONDA_PYTHON_VERSION=3.6
-
-    - os: linux
-      env: CONDA_PYTHON_VERSION=3.7
-
-    - os: linux
       env: CONDA_PYTHON_VERSION=3.8
 
     - os: linux
@@ -14,12 +8,6 @@ matrix:
 
     - os: linux
       env: CONDA_PYTHON_VERSION=3.10
-
-    - os: osx
-      env: CONDA_PYTHON_VERSION=3.6
-
-    - os: osx
-      env: CONDA_PYTHON_VERSION=3.7
 
     - os: osx
       env: CONDA_PYTHON_VERSION=3.8

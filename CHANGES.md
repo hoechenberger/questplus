@@ -7,6 +7,7 @@ development
 * Fix definition of `norm_cdf` psychometric function, by [Alex Forrence](https://github.com/aforren1)
 * Fix various warnings and `DeprecationWarnings` coming from NumPy and xarray
 * Add Thurstone scaling
+* Minimal required Python version is now 3.8
 
 v2019.4
 -------

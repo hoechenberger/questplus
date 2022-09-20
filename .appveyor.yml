@@ -3,8 +3,6 @@ build: off
 environment:
   MINICONDA: C:\\Miniconda3-x64
   matrix:
-    - CONDA_PYTHON_VERSION: "3.6"
-    - CONDA_PYTHON_VERSION: "3.7"
     - CONDA_PYTHON_VERSION: "3.8"
     - CONDA_PYTHON_VERSION: "3.9"
     - CONDA_PYTHON_VERSION: "3.10"
