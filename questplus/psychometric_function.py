@@ -379,7 +379,7 @@ def scaling_function(
     # q = np.atleast_1d(q)
     #
     # assert len(mag_min) == len(mag_max) == 1
-    
+
     nom = np.maximum(mag_min, x - t)
     denom = mag_max - t
 
@@ -430,19 +430,13 @@ def thurstone_scaling_function(
     # assert np.allclose(physical_magnitudes_stim_1.max(), physical_magnitudes_stim_2.max())
 
     if not np.array_equal(
-        np.unique(physical_magnitudes_stim_1),
-        np.sort(physical_magnitudes_stim_1)
+        np.unique(physical_magnitudes_stim_1), np.sort(physical_magnitudes_stim_1)
     ):
-        raise ValueError(
-            f'Values in physical_magnitudes_stim_1 must be unique.'
-        )
+        raise ValueError(f"Values in physical_magnitudes_stim_1 must be unique.")
     if not np.array_equal(
-        np.unique(physical_magnitudes_stim_2),
-        np.sort(physical_magnitudes_stim_2)
+        np.unique(physical_magnitudes_stim_2), np.sort(physical_magnitudes_stim_2)
     ):
-        raise ValueError(
-            f'Values in physical_magnitudes_stim_2 must be unique.'
-        )
+        raise ValueError(f"Values in physical_magnitudes_stim_2 must be unique.")
 
     # mag_min = np.min([physical_magnitudes_stim_1, physical_magnitudes_stim_2])
     mag_min = 0
@@ -451,27 +445,21 @@ def thurstone_scaling_function(
     physical_magnitudes_stim_1 = xr.DataArray(
         data=physical_magnitudes_stim_1,
         dims=["physical_magnitude_stim_1"],
-        coords={"physical_magnitude_stim_1": physical_magnitudes_stim_1}
+        coords={"physical_magnitude_stim_1": physical_magnitudes_stim_1},
     )
     physical_magnitudes_stim_2 = xr.DataArray(
         data=physical_magnitudes_stim_2,
         dims=["physical_magnitude_stim_2"],
-        coords={"physical_magnitude_stim_2": physical_magnitudes_stim_2}
+        coords={"physical_magnitude_stim_2": physical_magnitudes_stim_2},
     )
     threshold = xr.DataArray(
-        data=threshold,
-        dims=["threshold"],
-        coords={"threshold": threshold}
+        data=threshold, dims=["threshold"], coords={"threshold": threshold}
     )
-    power = xr.DataArray(
-        data=power,
-        dims=["power"],
-        coords={"power": power}
-    )
+    power = xr.DataArray(data=power, dims=["power"], coords={"power": power})
     perceptual_scale_max = xr.DataArray(
         data=perceptual_scale_max,
         dims=["perceptual_scale_max"],
-        coords={"perceptual_scale_max": perceptual_scale_max}
+        coords={"perceptual_scale_max": perceptual_scale_max},
     )
 
     scale_x1 = scaling_function(
@@ -480,7 +468,7 @@ def thurstone_scaling_function(
         mag_min=mag_min,
         mag_max=mag_max,
         t=threshold,
-        q=power
+        q=power,
     )
     scale_x2 = scaling_function(
         x=physical_magnitudes_stim_2,
@@ -488,12 +476,11 @@ def thurstone_scaling_function(
         mag_min=mag_min,
         mag_max=mag_max,
         t=threshold,
-        q=power
+        q=power,
     )
 
     def _mu_func(scale_x1, scale_x2):
-        return scipy.stats.norm.cdf(
-            (scale_x1 - scale_x2) / np.sqrt(2)
-        )
+        return scipy.stats.norm.cdf((scale_x1 - scale_x2) / np.sqrt(2))
+
     result = xr.apply_ufunc(_mu_func, scale_x1, scale_x2)
     return result

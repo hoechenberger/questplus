@@ -17,8 +17,8 @@ class QuestPlus:
         param_domain: dict,
         outcome_domain: dict,
         prior: Optional[dict] = None,
-        func: Literal['weibull', 'csf', 'norm_cdf', 'norm_cdf_2', 'thurstone_scaling'],
-        stim_scale: Optional[Literal['log10', 'dB', 'linear']],
+        func: Literal["weibull", "csf", "norm_cdf", "norm_cdf_2", "thurstone_scaling"],
+        stim_scale: Optional[Literal["log10", "dB", "linear"]],
         stim_selection_method: str = "min_entropy",
         stim_selection_options: Optional[dict] = None,
         param_estimation_method: str = "mean",
@@ -81,8 +81,10 @@ class QuestPlus:
 
         """
         if func == "thurstone_scaling" and stim_scale is not None:
-            raise ValueError('The Thurstonian scaling function cannot be used with '
-                             'a stim_scale parameter.')
+            raise ValueError(
+                "The Thurstonian scaling function cannot be used with "
+                "a stim_scale parameter."
+            )
 
         self.func = func
         self.stim_scale = stim_scale
@@ -209,10 +211,15 @@ class QuestPlus:
         outcome_values = list(self.outcome_domain.values())[0]
 
         if self.func not in [
-            "weibull", "csf", "norm_cdf", "norm_cdf_2", "thurstone_scaling"
+            "weibull",
+            "csf",
+            "norm_cdf",
+            "norm_cdf_2",
+            "thurstone_scaling",
         ]:
             raise ValueError(
-                f"Unknown psychometric function name specified: {self.func}")
+                f"Unknown psychometric function name specified: {self.func}"
+            )
 
         if self.func == "weibull":
             f = psychometric_function.weibull
@@ -226,9 +233,7 @@ class QuestPlus:
             f = psychometric_function.thurstone_scaling_function
 
         if self.func == "thurstone_scaling":
-            prop_correct = f(
-                **self.stim_domain, **self.param_domain
-            )
+            prop_correct = f(**self.stim_domain, **self.param_domain)
         else:
             prop_correct = f(
                 **self.stim_domain, **self.param_domain, scale=self.stim_scale
@@ -531,7 +536,7 @@ class QuestPlusWeibull(QuestPlus):
         param_estimation_method: str = "mean",
     ):
         """QUEST+ using the Weibull distribution function.
-        
+
         This is a convenience class that wraps `QuestPlus`.
         """
         super().__init__(
@@ -633,22 +638,20 @@ class QuestPlusThurstone(QuestPlus):
         param_estimation_method: str = "mean",
     ):
         """QUEST+ for Thurstonian scaling.
-        
+
         This is a convenience class that wraps `QuestPlus`.
         """
         super().__init__(
             stim_domain={
-                'physical_magnitudes_stim_1': physical_magnitudes_stim_1,
-                'physical_magnitudes_stim_2': physical_magnitudes_stim_2,
+                "physical_magnitudes_stim_1": physical_magnitudes_stim_1,
+                "physical_magnitudes_stim_2": physical_magnitudes_stim_2,
             },
             param_domain={
-                'threshold': thresholds,
-                'power': powers,
-                'perceptual_scale_max': perceptual_scale_maxs,
+                "threshold": thresholds,
+                "power": powers,
+                "perceptual_scale_max": perceptual_scale_maxs,
             },
-            outcome_domain={
-                'response': responses
-            },
+            outcome_domain={"response": responses},
             prior=prior,
             stim_scale=None,
             stim_selection_method=stim_selection_method,
