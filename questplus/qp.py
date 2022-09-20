@@ -1,8 +1,9 @@
-from typing import Optional, Sequence
-import xarray as xr
-import numpy as np
-import json_tricks
+from typing import Optional, Sequence, Literal
 from copy import deepcopy
+
+import numpy as np
+import xarray as xr
+import json_tricks
 
 from questplus import psychometric_function
 
@@ -15,8 +16,8 @@ class QuestPlus:
         param_domain: dict,
         outcome_domain: dict,
         prior: Optional[dict] = None,
-        func: str,
-        stim_scale: str,
+        func: Literal["weibull", "csf", "norm_cdf", "norm_cdf_2", "thurstone_scaling"],
+        stim_scale: Optional[Literal["log10", "dB", "linear"]],
         stim_selection_method: str = "min_entropy",
         stim_selection_options: Optional[dict] = None,
         param_estimation_method: str = "mean",
@@ -49,13 +50,11 @@ class QuestPlus:
             A-priori probabilities of parameter values.
 
         func
-            The psychometric function whose parameters to estimate. Currently
-            supported are the Weibull function, `weibull`, and the spatio-
-            temporal contrast sensitivity function, `csf`.
+            The psychometric function whose parameters to estimate.
 
         stim_scale
-            The scale on which the stimuli are provided. Currently supported
-            are the decadic logarithm, `log10`; and decibels, `dB`.
+            The scale on which the stimuli are provided. Has no effect for the
+            Thurstonian scaling function.
 
         stim_selection_method
             How to select the next stimulus. `min_entropy` picks the stimulus
@@ -80,6 +79,12 @@ class QuestPlus:
             the posterior distribution).
 
         """
+        if func == "thurstone_scaling" and stim_scale is not None:
+            raise ValueError(
+                "The Thurstonian scaling function cannot be used with "
+                "a stim_scale parameter."
+            )
+
         self.func = func
         self.stim_scale = stim_scale
         self.stim_domain = self._ensure_ndarray(stim_domain)
@@ -204,40 +209,51 @@ class QuestPlus:
         outcome_dim_name = list(self.outcome_domain.keys())[0]
         outcome_values = list(self.outcome_domain.values())[0]
 
-        if self.func in ["weibull", "csf", "norm_cdf", "norm_cdf_2"]:
-            if self.func == "weibull":
-                f = psychometric_function.weibull
-            elif self.func == "csf":
-                f = psychometric_function.csf
-            elif self.func == "norm_cdf":
-                f = psychometric_function.norm_cdf
-            else:
-                f = psychometric_function.norm_cdf_2
+        if self.func not in [
+            "weibull",
+            "csf",
+            "norm_cdf",
+            "norm_cdf_2",
+            "thurstone_scaling",
+        ]:
+            raise ValueError(
+                f"Unknown psychometric function name specified: {self.func}"
+            )
 
+        if self.func == "weibull":
+            f = psychometric_function.weibull
+        elif self.func == "csf":
+            f = psychometric_function.csf
+        elif self.func == "norm_cdf":
+            f = psychometric_function.norm_cdf
+        elif self.func == "norm_cdf_2":
+            f = psychometric_function.norm_cdf_2
+        elif self.func == "thurstone_scaling":
+            f = psychometric_function.thurstone_scaling_function
+
+        if self.func == "thurstone_scaling":
+            prop_correct = f(**self.stim_domain, **self.param_domain)
+        else:
             prop_correct = f(
                 **self.stim_domain, **self.param_domain, scale=self.stim_scale
             )
+        prop_incorrect = 1 - prop_correct
 
-            prop_incorrect = 1 - prop_correct
+        # Now this is a bit awkward. We concatenate the psychometric
+        # functions for the different responses. To do that, we first have
+        # to add an additional dimension.
+        # TODO: There's got to be a neater way to do this?!
+        corr_resp_dim = {outcome_dim_name: [outcome_values[0]]}
+        inccorr_resp_dim = {outcome_dim_name: [outcome_values[1]]}
 
-            # Now this is a bit awkward. We concatenate the psychometric
-            # functions for the different responses. To do that, we first have
-            # to add an additional dimension.
-            # TODO: There's got to be a neater way to do this?!
-            corr_resp_dim = {outcome_dim_name: [outcome_values[0]]}
-            inccorr_resp_dim = {outcome_dim_name: [outcome_values[1]]}
+        prop_correct = prop_correct.expand_dims(corr_resp_dim)
+        prop_incorrect = prop_incorrect.expand_dims(inccorr_resp_dim)
 
-            prop_correct = prop_correct.expand_dims(corr_resp_dim)
-            prop_incorrect = prop_incorrect.expand_dims(inccorr_resp_dim)
-
-            pf_values = xr.concat(
-                [prop_correct, prop_incorrect],
-                dim=outcome_dim_name,
-                coords=self.outcome_domain,
-            )
-        else:
-            raise ValueError("Unknown psychometric function name specified.")
-
+        pf_values = xr.concat(
+            [prop_correct, prop_incorrect],
+            dim=outcome_dim_name,
+            coords=self.outcome_domain,
+        )
         return pf_values
 
     def update(self, *, stim: dict, outcome: dict) -> None:
@@ -518,6 +534,10 @@ class QuestPlusWeibull(QuestPlus):
         stim_selection_options: Optional[dict] = None,
         param_estimation_method: str = "mean",
     ):
+        """QUEST+ using the Weibull distribution function.
+
+        This is a convenience class that wraps `QuestPlus`.
+        """
         super().__init__(
             stim_domain=dict(intensity=intensities),
             param_domain=dict(
@@ -599,3 +619,100 @@ class QuestPlusWeibull(QuestPlus):
 
         """
         super().update(stim=dict(intensity=intensity), outcome=dict(response=response))
+
+
+class QuestPlusThurstone(QuestPlus):
+    def __init__(
+        self,
+        *,
+        physical_magnitudes_stim_1: Sequence,
+        physical_magnitudes_stim_2: Sequence,
+        thresholds: Sequence,
+        powers: Sequence,
+        perceptual_scale_maxs: Sequence,
+        prior: Optional[dict] = None,
+        responses: Sequence = ("First", "Second"),
+        stim_selection_method: str = "min_entropy",
+        stim_selection_options: Optional[dict] = None,
+        param_estimation_method: str = "mean",
+    ):
+        """QUEST+ for Thurstonian scaling.
+
+        This is a convenience class that wraps `QuestPlus`.
+        """
+        super().__init__(
+            stim_domain={
+                "physical_magnitudes_stim_1": physical_magnitudes_stim_1,
+                "physical_magnitudes_stim_2": physical_magnitudes_stim_2,
+            },
+            param_domain={
+                "threshold": thresholds,
+                "power": powers,
+                "perceptual_scale_max": perceptual_scale_maxs,
+            },
+            outcome_domain={"response": responses},
+            prior=prior,
+            stim_scale=None,
+            stim_selection_method=stim_selection_method,
+            stim_selection_options=stim_selection_options,
+            param_estimation_method=param_estimation_method,
+            func="thurstone_scaling",
+        )
+
+    @property
+    def physical_magnitudes_stim_1(self) -> np.ndarray:
+        """
+        Physical magnitudes of the first stimulus.
+        """
+        return self.stim_domain["physical_magnitudes_stim_1"]
+
+    @property
+    def physical_magnitudes_stim_2(self) -> np.ndarray:
+        """
+        Physical magnitudes of the second stimulus.
+        """
+        return self.stim_domain["physical_magnitudes_stim_2"]
+
+    @property
+    def thresholds(self) -> np.ndarray:
+        """
+        The threshold parameter domain.
+        """
+        return self.param_domain["threshold"]
+
+    @property
+    def powers(self) -> np.ndarray:
+        """
+        The power parameter domain.
+        """
+        return self.param_domain["power"]
+
+    @property
+    def perceptual_scale_maxss(self) -> np.ndarray:
+        """
+        The "maximum value of the subjective perceptual scale" parameter domain.
+        """
+        return self.param_domain["perceptual_scale_max"]
+
+    @property
+    def responses(self) -> np.ndarray:
+        """
+        The response (outcome) domain.
+        """
+        return self.outcome_domain["response"]
+
+    def update(self, *, stim: dict, response: str) -> None:
+        """
+        Inform QUEST+ about a newly gathered measurement outcome for a given
+        stimulus parameter set, and update the posterior accordingly.
+
+        Parameters
+        ----------
+        stim
+            The stimulus that was used to generate the given outcome.
+
+        outcome
+            The observed outcome.
+
+        """
+        super().update(stim=stim, outcome=dict(response=response))

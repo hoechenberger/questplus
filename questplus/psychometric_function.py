@@ -1,5 +1,6 @@
 from typing import Union, Iterable
 import numpy as np
+from numpy.typing import ArrayLike
 import scipy.stats
 import xarray as xr
 
@@ -333,3 +334,152 @@ def norm_cdf_2(
 
     p = xr.apply_ufunc(_mu_func, x, mu, sd_, delta)
     return p
+
+
+def scaling_function(
+    *,
+    x: Union[ArrayLike, float],
+    m: float,
+    mag_min: float = 0,
+    mag_max: float = 1,
+    t: float,
+    q: float,
+) -> ArrayLike:
+    """
+    The scaling function.
+
+    Parameters
+    ----------
+    x
+        This pyhysical stimulus magnitude(s).
+    m
+        The maximum value of the subjective scale.
+    mag_min
+        The minimum value of the physical stimulus magnitude.
+    mag_max
+        The maximum value of the physical stimulus magnitude.
+    t
+        The threshold value (physical stimulus magnitude at which the
+        participant starts to perceive the stimulus).
+    q
+        The power exponent.
+
+    Returns
+    -------
+    result
+        The subjectively perceived intensities corresponding to the physical
+        stimulus magnitudes.
+    """
+    # x = np.atleast_1d(x)
+    # m = np.atleast_1d(m)
+    # mag_min = np.atleast_1d(mag_min)
+    # mag_max = np.atleast_1d(mag_max)
+    # t = np.atleast_1d(t)
+    # q = np.atleast_1d(q)
+    #
+    # assert len(mag_min) == len(mag_max) == 1
+
+    nom = np.maximum(mag_min, x - t)
+    denom = mag_max - t
+
+    result = m * (nom / denom) ** q
+    return result
+
+
+def thurstone_scaling_function(
+    *,
+    physical_magnitudes_stim_1: Union[ArrayLike, float],
+    physical_magnitudes_stim_2: Union[ArrayLike, float],
+    threshold: Union[ArrayLike, float],
+    power: Union[ArrayLike, float],
+    perceptual_scale_max: Union[ArrayLike, float],
+) -> ArrayLike:
+    """
+    The Thurstone scaling function.
+
+    Parameters
+    ----------
+    physical_magnitudes_stim_1, physical_magnitudes_stim_2
+        This pyhysical stimulus magnitudes the participant is asked to
+        compare. All possible pairings will be generated automatically.
+        The values in each array must be unique.
+    threshold
+        The threshold value (physical stimulus magnitude at which the
+        participant starts to perceive the stimulus).
+    power
+        The power exponent.
+    perceptual_scale_max
+        The maximum value of the subjective perceptual scale (in JND / S.D.).
+
+    Returns
+    -------
+    """
+    physical_magnitudes_stim_1 = np.atleast_1d(physical_magnitudes_stim_1)
+    physical_magnitudes_stim_2 = np.atleast_1d(physical_magnitudes_stim_2)
+    threshold = np.atleast_1d(threshold)
+    power = np.atleast_1d(power)
+    perceptual_scale_max = np.atleast_1d(perceptual_scale_max)
+
+    assert np.allclose(physical_magnitudes_stim_1, physical_magnitudes_stim_2)
+    # mag_min = x1.min()
+    # mag_max = x2.max()
+
+    # assert len(physical_magnitudes_stim_1) == len(physical_magnitudes_stim_2)
+    # assert np.allclose(physical_magnitudes_stim_1.min(), physical_magnitudes_stim_2.min())
+    # assert np.allclose(physical_magnitudes_stim_1.max(), physical_magnitudes_stim_2.max())
+
+    if not np.array_equal(
+        np.unique(physical_magnitudes_stim_1), np.sort(physical_magnitudes_stim_1)
+    ):
+        raise ValueError(f"Values in physical_magnitudes_stim_1 must be unique.")
+    if not np.array_equal(
+        np.unique(physical_magnitudes_stim_2), np.sort(physical_magnitudes_stim_2)
+    ):
+        raise ValueError(f"Values in physical_magnitudes_stim_2 must be unique.")
+
+    # mag_min = np.min([physical_magnitudes_stim_1, physical_magnitudes_stim_2])
+    mag_min = 0
+    mag_max = np.max([physical_magnitudes_stim_1, physical_magnitudes_stim_2])
+
+    physical_magnitudes_stim_1 = xr.DataArray(
+        data=physical_magnitudes_stim_1,
+        dims=["physical_magnitude_stim_1"],
+        coords={"physical_magnitude_stim_1": physical_magnitudes_stim_1},
+    )
+    physical_magnitudes_stim_2 = xr.DataArray(
+        data=physical_magnitudes_stim_2,
+        dims=["physical_magnitude_stim_2"],
+        coords={"physical_magnitude_stim_2": physical_magnitudes_stim_2},
+    )
+    threshold = xr.DataArray(
+        data=threshold, dims=["threshold"], coords={"threshold": threshold}
+    )
+    power = xr.DataArray(data=power, dims=["power"], coords={"power": power})
+    perceptual_scale_max = xr.DataArray(
+        data=perceptual_scale_max,
+        dims=["perceptual_scale_max"],
+        coords={"perceptual_scale_max": perceptual_scale_max},
+    )
+
+    scale_x1 = scaling_function(
+        x=physical_magnitudes_stim_1,
+        m=perceptual_scale_max,
+        mag_min=mag_min,
+        mag_max=mag_max,
+        t=threshold,
+        q=power,
+    )
+    scale_x2 = scaling_function(
+        x=physical_magnitudes_stim_2,
+        m=perceptual_scale_max,
+        mag_min=mag_min,
+        mag_max=mag_max,
+        t=threshold,
+        q=power,
+    )
+
+    def _mu_func(scale_x1, scale_x2):
+        return scipy.stats.norm.cdf((scale_x1 - scale_x2) / np.sqrt(2))
+
+    result = xr.apply_ufunc(_mu_func, scale_x1, scale_x2)
+    return result
