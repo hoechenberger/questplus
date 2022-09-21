@@ -40,16 +40,16 @@ jobs:
       run: python -m build --sdist
     - name: Install sdist
       run: |
-      - pip install --no-deps dist/questplus-*.*
-      - pip uninstall --yes questplus
-      - rm -rf dist
+        pip install --no-deps dist/questplus-*.*
+        pip uninstall --yes questplus
+        rm -rf dist
     - name: Build wheel
       run: python -m build --wheel
     - name: Install wheel
       run: |
-      - pip install --no-deps dist/questplus-*.*
-      - pip uninstall --yes questplus
-      - rm -rf dist
+        pip install --no-deps dist/questplus-*.*
+        pip uninstall --yes questplus
+        rm -rf dist
     - name: Install questplus
       run: pip install .
     - name: Test with pytest
