@@ -17,14 +17,13 @@ on:
 jobs:
   test:
 
-    concurrency: test_job
-    # cancel-in-progress: true
-
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, 3.10]
+        python-version: ["3.8", "3.9", "3.10"]
         os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
