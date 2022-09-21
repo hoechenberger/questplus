@@ -1,11 +1,43 @@
+[project]
+name = "questplus"
+description = "A QUEST+ implementation in Python."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+keywords = ["science", "neuroscience", "psychology", "staircase"]
+authors = [
+  {name = "Richard Höchenberger"},
+  {email = "richard.hoechenberger@gmail.com"}
+]
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python"
+]
+dependencies = [
+  "numpy",
+  "scipy",
+  "xarray",
+  "json_tricks"
+]
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
 [tool.black]
-target-version = ['py36']
+target-version = ['py38']
 include = '\.pyi?$'
 # 'extend-exclude' excludes files or directories in addition to the defaults
 extend-exclude = '''
 (
-  versioneer.py
-  | _version.py
   | ^/questplus/tests/
 )
 '''
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error"
+]

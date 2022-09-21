@@ -426,15 +426,26 @@ def test_thurstone_scaling():
         perceptual_scale_maxs=perceptual_scale_maxs
     )
 
-    for expected_stim, response in zip(expected_stims, responses):
-        assert np.isclose(
-            qp.next_stim['physical_magnitude_stim_1'],
-            expected_stim['physical_magnitude_stim_1']
-        )
-        assert np.isclose(
-            qp.next_stim['physical_magnitude_stim_2'],
-            expected_stim['physical_magnitude_stim_2']
-        )
+    for trial_idx, x in enumerate(zip(expected_stims, responses)):
+        expected_stim, response = x
+        
+        expected_stim_1 = expected_stim['physical_magnitude_stim_1']
+        expected_stim_2 = expected_stim['physical_magnitude_stim_2']
+        
+        next_stim_1 =  qp.next_stim['physical_magnitude_stim_1']
+        next_stim_2 =  qp.next_stim['physical_magnitude_stim_2']
+
+        if trial_idx in (6, 20):
+            # Rounding errors make the algorithm behave differently on different platforms.
+            if (
+                expected_stim_1 == next_stim_2 and
+                expected_stim_2 == next_stim_1
+            ):
+                expected_stim_1, expected_stim_2 = expected_stim_2, expected_stim_1
+                response = 'First' if response == 'Second' else 'Second'
+
+        assert np.isclose(next_stim_1, expected_stim_1)
+        assert np.isclose(next_stim_2, expected_stim_2)
         qp.update(stim=qp.next_stim, response=response)
 
 
