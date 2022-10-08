@@ -420,7 +420,7 @@ def thurstone_scaling_function(
     power = np.atleast_1d(power)
     perceptual_scale_max = np.atleast_1d(perceptual_scale_max)
 
-    assert np.allclose(physical_magnitudes_stim_1, physical_magnitudes_stim_2)
+    # assert np.allclose(physical_magnitudes_stim_1, physical_magnitudes_stim_2)
     # mag_min = x1.min()
     # mag_max = x2.max()
 
@@ -439,7 +439,10 @@ def thurstone_scaling_function(
 
     # mag_min = np.min([physical_magnitudes_stim_1, physical_magnitudes_stim_2])
     mag_min = 0
-    mag_max = np.max([physical_magnitudes_stim_1, physical_magnitudes_stim_2])
+    mag_max = np.hstack([
+        physical_magnitudes_stim_1,
+        physical_magnitudes_stim_2
+    ]).max()
 
     physical_magnitudes_stim_1 = xr.DataArray(
         data=physical_magnitudes_stim_1,
