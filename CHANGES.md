@@ -1,11 +1,11 @@
 Changes
 =======
 
-development
------------
+v2023.1
+--------
 
 * Fix definition of `norm_cdf` psychometric function, by [Alex Forrence](https://github.com/aforren1)
-* Fix various warnings and `DeprecationWarnings` coming from NumPy and xarray
+* Ensure compatibility with latest from NumPy and xarray versions
 * Add Thurstone scaling
 * Minimal required Python version is now 3.8
 
