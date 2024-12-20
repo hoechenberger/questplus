@@ -435,11 +435,11 @@ def test_thurstone_scaling():
         next_stim_1 =  qp.next_stim['physical_magnitude_stim_1']
         next_stim_2 =  qp.next_stim['physical_magnitude_stim_2']
 
-        if trial_idx in (6, 20):
+        if trial_idx in (6, 20, 21):
             # Rounding errors make the algorithm behave differently on different platforms.
             if (
-                expected_stim_1 == next_stim_2 and
-                expected_stim_2 == next_stim_1
+                np.isclose(expected_stim_1, next_stim_2) and
+                np.isclose(expected_stim_2, next_stim_1)
             ):
                 expected_stim_1, expected_stim_2 = expected_stim_2, expected_stim_1
                 response = 'First' if response == 'Second' else 'Second'
